@@ -1,0 +1,210 @@
+{
+ "metadata": {
+  "name": "",
+  "signature": "sha256:1e58cc3081833acad6435ef4601a59876542b7236a048b066e5c8c5b4bc99eb6"
+ },
+ "nbformat": 3,
+ "nbformat_minor": 0,
+ "worksheets": [
+  {
+   "cells": [
+    {
+     "cell_type": "heading",
+     "level": 1,
+     "metadata": {},
+     "source": [
+      "4 isotope plots for AGB stars, massive stars, and presolar grains"
+     ]
+    },
+    {
+     "cell_type": "markdown",
+     "metadata": {},
+     "source": [
+      "Let's first load nugridse.py and grain.py and load the NuGrid path"
+     ]
+    },
+    {
+     "cell_type": "code",
+     "collapsed": false,
+     "input": [
+      "import nugridse as nuse\n",
+      "import grain\n",
+      "# load the grain database as instance g\n",
+      "g = grain.gdb()\n",
+      "# set the NuGrid path to cadc\n",
+      "nuse.set_nugrid_path('/home/nugrid/CADC/NuGrid')"
+     ],
+     "language": "python",
+     "metadata": {},
+     "outputs": []
+    },
+    {
+     "cell_type": "heading",
+     "level": 2,
+     "metadata": {},
+     "source": [
+      "AGB star comparisons"
+     ]
+    },
+    {
+     "cell_type": "markdown",
+     "metadata": {},
+     "source": [
+      "Let's start with comparing presolar grain data with Zr and Ba isotopes. First we want to load two models, let's take the 2 and the 3 solar mass models at solar metallicity. Make sure that you choose the surface output files!"
+     ]
+    },
+    {
+     "cell_type": "code",
+     "collapsed": false,
+     "input": [
+      "inst_m2_z1 = nuse.se(mass=2.,Z=0.02,output='surf')\n",
+      "inst_m3_z1 = nuse.se(mass=3.,Z=0.02,output='surf')"
+     ],
+     "language": "python",
+     "metadata": {},
+     "outputs": []
+    },
+    {
+     "cell_type": "markdown",
+     "metadata": {},
+     "source": [
+      "Now let's filter the grain data for Zr data, assuming we want to make plots for Zr. Note that for that, we want to use the data from Barzyk et al. (2007)."
+     ]
+    },
+    {
+     "cell_type": "code",
+     "collapsed": false,
+     "input": [
+      "g.filter_desc(reference='Barzyk MAPS 2007')\n",
+      "g.filter_desc(graintype='M')"
+     ],
+     "language": "python",
+     "metadata": {},
+     "outputs": []
+    },
+    {
+     "cell_type": "markdown",
+     "metadata": {},
+     "source": [
+      "Now make some plots with the models and the grain data, using the plot_isoratios routine in data_plot.py. Since you can dig through explosive files as well as surface files, for now, please specify the special variable spec='surf' for AGB stars. If you don't specify it, the code will simply ask you to choose one while plotting."
+     ]
+    },
+    {
+     "cell_type": "code",
+     "collapsed": false,
+     "input": [
+      "xiso = ['Zr-96','Zr-94']\n",
+      "yiso = ['Zr-90','Zr-94']\n",
+      "inst_m2_z1.plot_isoratios(xiso,yiso,spec='surf',legend='M2 Zsun',plt_symb='s',plt_col='r',plt_show=False)\n",
+      "inst_m3_z1.plot_isoratios(xiso,yiso,spec='surf',legend='M3 Zsun',plt_symb='^',plt_col='b',plt_show=False)\n",
+      "g.plot_isoratios(xiso,yiso)"
+     ],
+     "language": "python",
+     "metadata": {},
+     "outputs": []
+    },
+    {
+     "cell_type": "markdown",
+     "metadata": {},
+     "source": [
+      "You can see that the grains and the models are plotted together, unfortunately the predictions are not that good. But: Umberto is making eveything better, so stay tuned!"
+     ]
+    },
+    {
+     "cell_type": "heading",
+     "level": 2,
+     "metadata": {},
+     "source": [
+      "Explosive models"
+     ]
+    },
+    {
+     "cell_type": "markdown",
+     "metadata": {},
+     "source": [
+      "Let's  now have a look at how to dig through massive star models. For that reason, let's load the 25 solar mass star model with solar metallicity. For this example, we want to consider decays ourselves, so let's use the H5_restart files."
+     ]
+    },
+    {
+     "cell_type": "code",
+     "collapsed": false,
+     "input": [
+      "inst_massive = nuse.se(mass=25,Z=0.02,type='ppd_exp',output='restart')"
+     ],
+     "language": "python",
+     "metadata": {},
+     "outputs": []
+    },
+    {
+     "cell_type": "markdown",
+     "metadata": {},
+     "source": [
+      "Let's define what we actually want to plot, isotopes, decays to consider. Please note that this is just an example, if you want something additional, check the docstring - the function of your dreams might already be programmed into the routine (although to be honest, probably not...)"
+     ]
+    },
+    {
+     "cell_type": "code",
+     "collapsed": false,
+     "input": [
+      "# define the isotopes we want to look at\n",
+      "xiso = ['Ti-44','Ti-48']\n",
+      "yiso = ['Si-29','Si-28']\n",
+      "# add some species that we manually decay\n",
+      "addiso = [['Ti-48','Sc-48','V-48','Cr-48'],['Ti-44','V-44',],['Si-29','Al-29','Mg-29','P-29'],['Si-28','Al-28','Mg-28','P-28']]\n",
+      "# some further specifications\n",
+      "co_toggle = 'c'   # select carbon rich zones in the last files\n",
+      "plt_sparse = 10   # plot every so many datapoint"
+     ],
+     "language": "python",
+     "metadata": {},
+     "outputs": []
+    },
+    {
+     "cell_type": "markdown",
+     "metadata": {},
+     "source": [
+      "Now let's select the grains we want to plot along, let's just for now choose all the SiC X grains. First we will reset the filter and then select the X grains."
+     ]
+    },
+    {
+     "cell_type": "code",
+     "collapsed": false,
+     "input": [
+      "g.reset_filter()\n",
+      "g.filter_desc(graintype='X')"
+     ],
+     "language": "python",
+     "metadata": {},
+     "outputs": []
+    },
+    {
+     "cell_type": "markdown",
+     "metadata": {},
+     "source": [
+      "Now we plot the models and the grains together"
+     ]
+    },
+    {
+     "cell_type": "code",
+     "collapsed": false,
+     "input": [
+      "inst_massive.plot_isoratios(xiso,yiso,spec='exp',co_toggle=co_toggle,plt_sparse=plt_sparse,addiso=addiso,plt_lw='2',deltax=False,legend='M25 Zsun',plt_show=False)\n",
+      "g.plot_isoratios(xiso,yiso,legloc='upper right')"
+     ],
+     "language": "python",
+     "metadata": {},
+     "outputs": []
+    },
+    {
+     "cell_type": "code",
+     "collapsed": false,
+     "input": [],
+     "language": "python",
+     "metadata": {},
+     "outputs": []
+    }
+   ],
+   "metadata": {}
+  }
+ ]
+}
