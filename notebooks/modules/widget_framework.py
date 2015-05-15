@@ -37,16 +37,16 @@ class framework():
         if state == "default":
             for obj_name in self._object_list:
                 if obj_name in self._display_list:
-                    self.apply_attributes(obj_name, **self._default_display_style)
+                    self.set_attributes(obj_name, **self._default_display_style)
                 elif obj_name in self._io_list:
-                    self.apply_attributes(obj_name, **self._default_io_style)
+                    self.set_attributes(obj_name, **self._default_io_style)
                 else:
                     raise ValueError("the object: "+obj_name+" is not assigned as a io or display object")
                 self._object_list[obj_name].visible=False
 
         if state in self._attributes:
             for obj_name in self._attributes[state]:
-                self.apply_attributes(obj_name, **self._attributes[state][obj_name])
+                self.set_attributes(obj_name, **self._attributes[state][obj_name])
                 
         if state in self._links:
             for obj_name in self._links[state]:
@@ -81,12 +81,11 @@ class framework():
                 children_list = [self._object_list[child_name] for child_name in self._children[state][obj_name]]
                 self._object_list[obj_name].children = children_list
         
-        if state in self._roots:
-            if len(self._roots[state]) > 0:
-                root_list = [self._object_list[obj_name] for obj_name in self._roots[state]]
-                display(*root_list)
-                
-                   
+#        if state in self._roots:
+#            if len(self._roots[state]) > 0:
+#                root_list = [self._object_list[obj_name] for obj_name in self._roots[state]]
+#                display(*root_list)
+
     def add_state(self, state_name):
         if state_name in self._state_list:
             raise ValueError("the state: "+state_name+" is already defined!")
@@ -225,7 +224,7 @@ class framework():
     def set_default_display_style(self, **kwargs):
         self._default_display_style = kwargs
         
-    def apply_attributes(self, obj_name, **kwargs):
+    def set_attributes(self, obj_name, **kwargs):
         if obj_name in self._object_list:
             obj = self._object_list[obj_name]
             for attr in kwargs:
@@ -233,6 +232,16 @@ class framework():
                     setattr(obj, attr, kwargs[attr])
                 else:
                     raise AttributeError(obj_name+" does not have attribute "+attr)
+        else:
+            raise ValueError("The object: "+obj_name+" is not defined!")
+
+    def get_attribute(self, obj_name, attribute):
+        if obj_name in self._object_list:
+            obj = self._object_list[obj_name]
+            if hasattr(obj,attribute):
+                return getattr(obj, attribute)
+            else:
+                raise AttributeError(obj_name+" does not have attribute "+attribute)
         else:
             raise ValueError("The object: "+obj_name+" is not defined!")
             

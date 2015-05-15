@@ -1,2 +1,4 @@
-##Widget modules##
-Python modules using IPython widgets to add an interactive interface to Wendi.
+##widget_framework##
+widget_framework.py contains the class framework. This class adds a
+framework that works with IPython widgets to produce interactive
+interfaces constructed from multiple widget commponets.
