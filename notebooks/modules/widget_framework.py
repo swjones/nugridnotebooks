@@ -19,7 +19,7 @@ class framework():
         self._links = {}
         self._callbacks = {}
         self._children = {}
-        self._roots = {}
+        self._data = {}
         
         #registration lists
         self._state_list = []
@@ -80,19 +80,27 @@ class framework():
             for obj_name in self._children[state]:
                 children_list = [self._object_list[child_name] for child_name in self._children[state][obj_name]]
                 self._object_list[obj_name].children = children_list
+                
+    def display_object(self, obj_name, state="default"):
+        if obj_name in self._object_list:
+            if state in self._state_list:
+                self.set_state(state)
+                display(self._object_list[obj_name])
+            else:
+                raise ValueError("no state: "+state+" defined!")
+        else:
+            raise ValueError("no object: "+obj_name+" defined!")
         
-#        if state in self._roots:
-#            if len(self._roots[state]) > 0:
-#                root_list = [self._object_list[obj_name] for obj_name in self._roots[state]]
-#                display(*root_list)
-
     def add_state(self, state_name):
         if state_name in self._state_list:
             raise ValueError("the state: "+state_name+" is already defined!")
         else:
             self._state_list.append(state_name)
+
+    def get_state(self):
+        return self._state
     
-    def switch_state(self, state):
+    def set_state(self, state):
         if state in self._state_list:
             self._state = state
             self.update()
@@ -175,22 +183,31 @@ class framework():
         else:
             raise ValueError("no state: "+state+" defined!")
     
-    def set_state_root_objects(self, roots, state="default"):
+    def set_state_data(self, data_name, data, state="default"):
         """ 
-        Set root objects for the state, roots should be a list of names.
+        Set data associated with the given state.
         """
         if state in self._state_list:
-            if not (state in self._roots):
-                self._roots[state] = []
-            for obj_name in roots:
-                if obj_name in self._object_list:
-                    if not (obj_name in self._roots[state]):
-                        self._roots[state].append(obj_name)
-                else:
-                    raise ValueError("no object: "+obj_name+" defined!")
+            if not (state in self._data):
+                self._data[state]={}
+            if not (data_name in self._data[state]):
+                self._data[state][data_name]=None
+            self._data[state][data_name] = data
         else:
             raise ValueError("no state: "+state+" defined!")
-   
+
+    def get_state_data(self, data_name, state="default"):
+        """ 
+        get data associated with the given state
+        """
+        if state in self._state_list:
+            if data_name in self._data[state]:
+                return self._data[state][data_name]
+            else:
+                raise ValueError("no data: "+data_name+" defained for the state: "+state)
+        else:
+            raise ValueError("no state: "+state+" defined!")
+
     def add_display_object(self, obj_name):
         """ 
         add display widget, these widgets should all be container type
@@ -244,4 +261,4 @@ class framework():
                 raise AttributeError(obj_name+" does not have attribute "+attribute)
         else:
             raise ValueError("The object: "+obj_name+" is not defined!")
-            
+    
