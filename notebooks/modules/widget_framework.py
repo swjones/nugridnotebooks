@@ -108,6 +108,7 @@ class framework():
         if state in self._state_list:
             self._state = state
             self.update()
+            print state#TEMP REMOVE -------------------------- TEMP
         else:
             raise ValueError("no state: "+state+" defined!")
 
@@ -145,7 +146,7 @@ class framework():
         """
         if not isinstance(state, basestring):
             for one_state in state:
-                self.set_state_links(link_name, link, one_state, directional)
+                self.set_state_links(link_name, links, one_state, directional)
         else:
             if state in self._state_list:
                 if not (state in self._links):
