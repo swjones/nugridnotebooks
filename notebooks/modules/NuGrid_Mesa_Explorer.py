@@ -100,8 +100,7 @@ frame.set_state_attribute('Title', visible=True, value = "<h1>NuGrid / Mesa Expl
 frame.set_state_attribute('widget', visible=True, border_style="", border_radius="0em")
 
 frame.set_state_attribute("page_data", visible=True)
-frame.set_state_attribute('mass', visible=True, description="Mass: ", min=0,
-                          max=25, step=0.25)
+frame.set_state_attribute('mass', visible=True, description="Mass: ", options=["1.0", "1.65", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "12.0", "15.0", "20.0", "25.0", "32.0", "60.0"], selected_label="2.0")
 frame.set_state_attribute('Z', visible=True, description="Z: ",
                           options=["1E-4", "1E-3", "6E-3", "1E-2", "2E-2"])
 frame.set_state_attribute("select_nugrid_mesa", visible=True,
@@ -121,7 +120,7 @@ frame.set_state_attribute("load_data", states_nugrid, disabled=False)
 frame.set_state_attribute("select_plot", states_nugrid[1:], options={"Isotope abundance":"iso_abund", "Abundance chart":"abu_chart", "Movie":"movie"}, disabled=False)
 
 ###MESA###
-frame.set_state_attribute("select_module", states_mesa, options={"History":"star_log", "Profile":"mesa_profile"}, disabled=False)
+frame.set_state_attribute("select_module", states_mesa, options={"History":"star_log", "Profile":"mesa_profile"}, disabled=False, selected_label="History")
 frame.set_state_attribute("load_data", states_mesa, disabled=False)
 frame.set_state_attribute("select_plot", states_mesa[1:], options={"HR-Diagram":"hrd", "Plot":"plot"}, disabled=False)
 
@@ -137,7 +136,7 @@ def sel_nugrid_mesa(widget, value):
 def load(widget):
     clear_output()
     data = None
-    mass = frame.get_attribute("mass", "value")
+    mass = float(frame.get_attribute("mass", "value"))
     Z = float(frame.get_attribute("Z", "value"))
     module = frame.get_attribute("select_module", "value")
     if module == "se":
@@ -192,7 +191,7 @@ frame.set_object("Title", widgets.HTML())
 frame.set_object("widget", widgets.Tab())
 
 frame.set_object("page_data", widgets.VBox())
-frame.set_object("mass", widgets.FloatSlider())
+frame.set_object("mass", widgets.Dropdown(options=["2.0"]))#The option 2.0 is defined since above the selected_label is defined as 2.0, and selected_label is set before options causing a key error
 frame.set_object("Z", widgets.ToggleButtons())
 
 frame.set_object("select_nugrid_mesa", widgets.Dropdown())
