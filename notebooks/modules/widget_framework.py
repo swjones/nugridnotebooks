@@ -78,7 +78,10 @@ class framework():
 
         if state in self._children:
             for obj_name in self._children[state]:
-                children_list = [self._object_list[child_name] for child_name in self._children[state][obj_name]]
+                if self._children[state][obj_name][0]:
+                    for i, title in enumerate(self._children[state][obj_name][2]):
+                        self._object_list[obj_name].set_title(i, title)
+                children_list = [self._object_list[child_name] for child_name in self._children[state][obj_name][1]]
                 self._object_list[obj_name].children = children_list
                 
     def display_object(self, obj_name, state="default"):
@@ -178,26 +181,37 @@ class framework():
             else:
                 raise ValueError("no object: "+obj_name+" defined!")
             
-    def set_state_children(self, obj_name, children, state="default"):
+    def set_state_children(self, obj_name, children, state="default", titles=None):
         """ 
         Set chidren of the display widgets, children should be a list of names
         """
         if not isinstance(state, basestring):
             for one_state in state:
-                self.set_state_children(obj_name, children, one_state)
+                self.set_state_children(obj_name, children, one_state, titles)
         else:
             if state in self._state_list:
                 if obj_name in self._display_list:
                     if not (state in self._children):
                         self._children[state]={}
-                    if not (obj_name in self._children[state]):
-                        self._children[state][obj_name] = []
-                    for child_name in children:
-                        if child_name in self._object_list:
-                            if not (child_name in self._children[state][obj_name]):
-                                self._children[state][obj_name].append(child_name)
-                        else:
-                            raise ValueError("no object: "+child_name+" defined!")
+                    if titles == None:
+                        if not (obj_name in self._children[state]):
+                            self._children[state][obj_name] = (False, [])
+                        for child_name in children:
+                            if child_name in self._object_list:
+                                if not (child_name in self._children[state][obj_name][1]):
+                                    self._children[state][obj_name][1].append(child_name)
+                            else:
+                                raise ValueError("no object: "+child_name+" defined!")
+                    else:
+                        if not (obj_name in self._children[state]):
+                            self._children[state][obj_name] = (True, [], [])
+                        for i, child_name in enumerate(children):
+                            if child_name in self._object_list:
+                                if not (child_name in self._children[state][obj_name][1]):
+                                    self._children[state][obj_name][1].append(child_name)
+                                    self._children[state][obj_name][2].append(titles[i])
+                            else:
+                                raise ValueError("no object: "+child_name+" defined!")
                 else:
                     if obj_name in self._object_list:
                         raise ValueError("object: "+obj_name+" must be a display object to be a parent object")
