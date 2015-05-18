@@ -2,6 +2,8 @@ import modules.widget_framework as framework
 from IPython.html import widgets
 from IPython.display import display, clear_output
 from matplotlib import pyplot
+import nugridse as mp
+import mesa as ms
 
 
 frame = framework.framework()
