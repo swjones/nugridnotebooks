@@ -378,7 +378,3 @@ frame.set_object("generate_plot", widgets.Button())
 
 def start_explorer():
     frame.display_object("window")
-
-
-
-
