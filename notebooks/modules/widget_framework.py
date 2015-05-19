@@ -19,7 +19,7 @@ class framework():
         self._links = {}
         self._callbacks = {}
         self._children = {}
-        self._roots = {}
+        self._data = {}
         
         #registration lists
         self._state_list = []
@@ -78,119 +78,177 @@ class framework():
 
         if state in self._children:
             for obj_name in self._children[state]:
-                children_list = [self._object_list[child_name] for child_name in self._children[state][obj_name]]
+                if self._children[state][obj_name][0]:
+                    for i, title in enumerate(self._children[state][obj_name][2]):
+                        self._object_list[obj_name].set_title(i, title)
+                children_list = [self._object_list[child_name] for child_name in self._children[state][obj_name][1]]
                 self._object_list[obj_name].children = children_list
-        
-#        if state in self._roots:
-#            if len(self._roots[state]) > 0:
-#                root_list = [self._object_list[obj_name] for obj_name in self._roots[state]]
-#                display(*root_list)
-
-    def add_state(self, state_name):
-        if state_name in self._state_list:
-            raise ValueError("the state: "+state_name+" is already defined!")
-        else:
-            self._state_list.append(state_name)
-    
-    def switch_state(self, state):
-        if state in self._state_list:
-            self._state = state
-            self.update()
-        else:
-            raise ValueError("no state: "+state+" defined!")
-
-    def set_state_callbacks(self, obj_name, callback, attribute=None, state="default", type="on_trait_change"):
-        """ 
-        Set callback for the object obj_name when the state is state.
-        type must be one of "on_trait_change", "on_click", "on_submit"
-        """
+                
+    def display_object(self, obj_name, state="default"):
         if obj_name in self._object_list:
             if state in self._state_list:
-                if type in ["on_trait_change", "on_click", "on_submit"]:
-                    if not (state in self._callbacks):
-                        self._callbacks[state]={}
-                    if not (obj_name in self._callbacks[state]):
-                        self._callbacks[state][obj_name]={}
-                    if (type == "on_trait_change") and (attribute==None):
-                        raise ValueError("if type == 'on_trait_change' then attribute must be defined")
-                    self._callbacks[state][obj_name][type] = [callback, attribute]
-                else:
-                    raise ValueError("no callback: "+type+" defined!")
+                self.set_state(state)
+                display(self._object_list[obj_name])
             else:
                 raise ValueError("no state: "+state+" defined!")
         else:
             raise ValueError("no object: "+obj_name+" defined!")
+        
+    def add_state(self, state_name):
+        if not isinstance(state_name, basestring):
+            for one_state_name in state_name:
+                self.add_state(one_state_name)
+        else:
+            if state_name in self._state_list:
+                raise ValueError("the state: "+state_name+" is already defined!")
+            else:
+                self._state_list.append(state_name)
+
+    def get_state(self):
+        return self._state
+    
+    def set_state(self, state):
+        if state in self._state_list:
+            self._state = state
+            self.update()
+            print state#TEMP REMOVE -------------------------- TEMP
+        else:
+            raise ValueError("no state: "+state+" defined!")
+
+    def set_state_callbacks(self, obj_name, callback, attribute="value",
+                            state="default", type="on_trait_change"):
+        """ 
+        Set callback for the object obj_name when the state is state.
+        type must be one of "on_trait_change", "on_click", "on_submit"
+        """
+        if not isinstance(state, basestring):
+            for one_state in state:
+                self.set_state_callbacks(obj_name, callback, attribute, one_state, type)
+        else:
+            if obj_name in self._object_list:
+                if state in self._state_list:
+                    if type in ["on_trait_change", "on_click", "on_submit"]:
+                        if not (state in self._callbacks):
+                            self._callbacks[state]={}
+                        if not (obj_name in self._callbacks[state]):
+                            self._callbacks[state][obj_name]={}
+                        if (type == "on_trait_change") and (attribute==None):
+                            raise ValueError("if type == 'on_trait_change' then attribute must be defined")
+                        self._callbacks[state][obj_name][type] = [callback, attribute]
+                    else:
+                        raise ValueError("no callback: "+type+" defined!")
+                else:
+                    raise ValueError("no state: "+state+" defined!")
+            else:
+                raise ValueError("no object: "+obj_name+" defined!")
             
-    def set_state_links(self, link_name, links, state="default", directional=False):
+    def set_state_links(self, link_name, links, state="default",
+                        directional=False):
         """ 
         Set links for the state. links should be of the form [("obj_name", "atribute"), ("obj_name", "attribute")]
         """
-        if state in self._state_list:
-            if not (state in self._links):
-                self._links[state]={}
-            if not (link_name in self._links[state]):
-                self._links[state][link_name]=[]
-            self._links[state][link_name] = [directional, links]
+        if not isinstance(state, basestring):
+            for one_state in state:
+                self.set_state_links(link_name, links, one_state, directional)
         else:
-            raise ValueError("no state: "+state+" defined!")
+            if state in self._state_list:
+                if not (state in self._links):
+                    self._links[state]={}
+                if not (link_name in self._links[state]):
+                    self._links[state][link_name]=[]
+                self._links[state][link_name] = [directional, links]
+            else:
+                raise ValueError("no state: "+state+" defined!")
             
     def set_state_attribute(self, obj_name, state="default", **kwargs):
         """ 
         Set attributes of the object: obj_name when the current state is state
         """
-        if obj_name in self._object_list:
-            if state in self._state_list:
-                if not (state in self._attributes):
-                    self._attributes[state]={}
-                if not (obj_name in self._attributes[state]):
-                    self._attributes[state][obj_name]={}
-                for key in kwargs:
-                    self._attributes[state][obj_name][key] = kwargs[key]
-            else:
-                raise ValueError("no state: "+state+" defined!")
+        if not isinstance(state, basestring):
+            for one_state in state:
+                self.set_state_attribute(obj_name, one_state, **kwargs)
         else:
-            raise ValueError("no object: "+obj_name+" defined!")
+            if obj_name in self._object_list:
+                if state in self._state_list:
+                    if not (state in self._attributes):
+                        self._attributes[state]={}
+                    if not (obj_name in self._attributes[state]):
+                        self._attributes[state][obj_name]={}
+                    for key in kwargs:
+                        self._attributes[state][obj_name][key] = kwargs[key]
+                else:
+                    raise ValueError("no state: "+state+" defined!")
+            else:
+                raise ValueError("no object: "+obj_name+" defined!")
             
-    def set_state_children(self, obj_name, children, state="default"):
+    def set_state_children(self, obj_name, children, state="default", titles=None):
         """ 
         Set chidren of the display widgets, children should be a list of names
         """
-        if state in self._state_list:
-            if obj_name in self._display_list:
-                if not (state in self._children):
-                    self._children[state]={}
-                if not (obj_name in self._children[state]):
-                    self._children[state][obj_name] = []
-                for child_name in children:
-                    if child_name in self._object_list:
-                        if not (child_name in self._children[state][obj_name]):
-                            self._children[state][obj_name].append(child_name)
-                    else:
-                        raise ValueError("no object: "+child_name+" defined!")
-            else:
-                if obj_name in self._object_list:
-                    raise ValueError("object: "+obj_name+" must be a display object to be a parent object")
-                else:
-                    raise ValueError("no object: "+obj_name+" defined!")
+        if not isinstance(state, basestring):
+            for one_state in state:
+                self.set_state_children(obj_name, children, one_state, titles)
         else:
-            raise ValueError("no state: "+state+" defined!")
+            if state in self._state_list:
+                if obj_name in self._display_list:
+                    if not (state in self._children):
+                        self._children[state]={}
+                    if titles == None:
+                        if not (obj_name in self._children[state]):
+                            self._children[state][obj_name] = (False, [])
+                        for child_name in children:
+                            if child_name in self._object_list:
+                                if not (child_name in self._children[state][obj_name][1]):
+                                    self._children[state][obj_name][1].append(child_name)
+                            else:
+                                raise ValueError("no object: "+child_name+" defined!")
+                    else:
+                        if not (obj_name in self._children[state]):
+                            self._children[state][obj_name] = (True, [], [])
+                        for i, child_name in enumerate(children):
+                            if child_name in self._object_list:
+                                if not (child_name in self._children[state][obj_name][1]):
+                                    self._children[state][obj_name][1].append(child_name)
+                                    self._children[state][obj_name][2].append(titles[i])
+                            else:
+                                raise ValueError("no object: "+child_name+" defined!")
+                else:
+                    if obj_name in self._object_list:
+                        raise ValueError("object: "+obj_name+" must be a display object to be a parent object")
+                    else:
+                        raise ValueError("no object: "+obj_name+" defined!")
+            else:
+                raise ValueError("no state: "+state+" defined!")
     
-    def set_state_root_objects(self, roots, state="default"):
+    def set_state_data(self, data_name, data, state="default"):
         """ 
-        Set root objects for the state, roots should be a list of names.
+        Set data associated with the given state.
+        """
+        if not isinstance(state, basestring):
+            for one_state in state:
+                self.set_state_data(data_name, data, one_state)
+        else:
+            if state in self._state_list:
+                if not (state in self._data):
+                    self._data[state]={}
+                if not (data_name in self._data[state]):
+                    self._data[state][data_name]=None
+                self._data[state][data_name] = data
+            else:
+                raise ValueError("no state: "+state+" defined!")
+
+    def get_state_data(self, data_name, state="default"):
+        """ 
+        get data associated with the given state
         """
         if state in self._state_list:
-            if not (state in self._roots):
-                self._roots[state] = []
-            for obj_name in roots:
-                if obj_name in self._object_list:
-                    if not (obj_name in self._roots[state]):
-                        self._roots[state].append(obj_name)
-                else:
-                    raise ValueError("no object: "+obj_name+" defined!")
+            if data_name in self._data[state]:
+                return self._data[state][data_name]
+            else:
+                raise ValueError("no data: "+data_name+" defained for the state: "+state)
         else:
             raise ValueError("no state: "+state+" defined!")
-   
+
     def add_display_object(self, obj_name):
         """ 
         add display widget, these widgets should all be container type
@@ -244,4 +302,4 @@ class framework():
                 raise AttributeError(obj_name+" does not have attribute "+attribute)
         else:
             raise ValueError("The object: "+obj_name+" is not defined!")
-            
+    
