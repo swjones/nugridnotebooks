@@ -1,7 +1,13 @@
 import matplotlib
+import os
+
+#temp fix
+if os.path.isdir("/home/nugrid/omega_sygma"):
+    os.environ["SYGMADIR"] = "/home/nugrid/omega_sygma"
+
 import sygma as s
 
-import modules.widget_framework as framework
+import widget_framework as framework
 from IPython.html import widgets
 from IPython.display import display, clear_output
 from matplotlib import pyplot
