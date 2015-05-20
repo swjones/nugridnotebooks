@@ -18,9 +18,13 @@ states = ["run_sim", "plot_totmasses", "plot_mass", "plot_spectro", "plot_mass_r
 
 frame.add_state(states)
 
-isotopes=['H-1','H-2','He-3','He-4','Li-7','B-11','C-12','C-13','N-14','N-15','O-16','O-17','O-18','F-19','Ne-20','Ne-21','Ne-22','Na-23','Mg-24','Mg-25','Mg-26','Al-27','Si-28','Si-29','Si-30','P-31','S-32','S-33','S-34','S-36','Cl-35','Cl-37','Ar-36','Ar-38','Ar-40','K-39','K-40','K-41','Ca-40','Ca-42','Ca-43','Ca-44','Ca-46','Ca-48','Sc-45','Ti-46','Ti-47','Ti-48','Ti-49','Ti-50','V-50','V-51','Cr-50','Cr-52','Cr-53','Cr-54','Mn-55','Fe-54','Fe-56','Fe-57','Fe-58','Co-59','Ni-58','Ni-60','Ni-61','Ni-62','Ni-64']
-elements=['H','He','Li','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni']
+isotopes_all=['H-1','H-2','He-3','He-4','Li-7','B-11','C-12','C-13','N-14','N-15','O-16','O-17','O-18','F-19','Ne-20','Ne-21','Ne-22','Na-23','Mg-24','Mg-25','Mg-26','Al-27','Si-28','Si-29','Si-30','P-31','S-32','S-33','S-34','S-36','Cl-35','Cl-37','Ar-36','Ar-38','Ar-40','K-39','K-40','K-41','Ca-40','Ca-42','Ca-43','Ca-44','Ca-46','Ca-48','Sc-45','Ti-46','Ti-47','Ti-48','Ti-49','Ti-50','V-50','V-51','Cr-50','Cr-52','Cr-53','Cr-54','Mn-55','Fe-54','Fe-56','Fe-57','Fe-58','Co-59','Ni-58','Ni-60','Ni-61','Ni-62','Ni-64']
+elements_all=['H','He','Li','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni']
+isotopes_sn1a=['C-12','C-13','N-14','N-15','O-16','O-17','O-18','F-19','Ne-20','Ne-21','Ne-22','Na-23','Mg-24','Mg-25','Mg-26','Al-27','Si-28','Si-29','Si-30','P-31','S-32','S-33','S-34','S-36','Cl-35','Cl-37','Ar-36','Ar-38','Ar-40','K-39','K-40','K-41','Ca-40','Ca-42','Ca-43','Ca-44','Ca-46','Ca-48','Sc-45','Ti-46','Ti-47','Ti-48','Ti-49','Ti-50','V-50','V-51','Cr-50','Cr-52','Cr-53','Cr-54','Mn-55','Fe-54','Fe-56','Fe-57','Fe-58','Co-59','Ni-58','Ni-60','Ni-61','Ni-62','Ni-64']
+elements_sn1a=['C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni']
 
+elements=elements_all
+isotopes=isotopes_all
 
 frame.add_display_object("window")
 frame.add_io_object("title")
@@ -51,10 +55,11 @@ frame.add_io_object("sn1a_rates")
 frame.add_io_object("run_sim")
 
 frame.add_io_object("plot_type")
+frame.add_io_object("sim_responce")
 
 frame.set_state_children("window", ["title", "widget"])
 frame.set_state_children("widget", ["sim_page"], titles=["Simulation"])
-frame.set_state_children("sim_page", ["mass_Z_group", "time_group", "imf_type_group", "imf_mass_group", "sn1a_group", "run_sim"])
+frame.set_state_children("sim_page", ["mass_Z_group", "time_group", "imf_type_group", "imf_mass_group", "sn1a_group", "run_sim", "sim_responce"])
 frame.set_state_children("mass_Z_group", ["mass_gas", "init_Z"])
 frame.set_state_children("time_group", ["t_end", "dt"])
 frame.set_state_children("imf_type_group", ["imf_type", "imf_alpha"])
@@ -89,31 +94,33 @@ frame.set_state_attribute('widget', visible=True, **group_style)
 
 frame.set_state_attribute('sim_page', visible=True)
 frame.set_state_attribute("mass_Z_group", visible=True, **group_style)
-frame.set_state_attribute("mass_gas", visible=True, description="Gas cloud mass [$M_{\odot}$]:", value="1.0", **text_box_style)
-frame.set_state_attribute('init_Z', visible=True, description="Set initial Z: ", options=["0.0", "0.0001", "0.006", "0.01", "0.02"], selected_label="0.02")
+frame.set_state_attribute("mass_gas", visible=True, description="Total stellar mass [$M_{\odot}$]:", value="1.0", **text_box_style)
+frame.set_state_attribute('init_Z', visible=True, description="Initial metallicity: ", options=["0.02", "0.01", "0.006", "0.0001", "0.0"])
 
 frame.set_state_attribute('time_group', visible=True, **group_style)
-frame.set_state_attribute('t_end', visible=True, description="Set duration [yrs]: ", value="1.0e10", **text_box_style)
-frame.set_state_attribute('dt', visible=True, description="Set time step [yrs]: ", value="1.0e7", **text_box_style)
+frame.set_state_attribute('t_end', visible=True, description="Final time [yrs]: ", value="1.0e10", **text_box_style)
+frame.set_state_attribute('dt', visible=True, description="Time step [yrs]: ", value="1.0e7", **text_box_style)
 
 frame.set_state_attribute('imf_type_group', visible=True, **group_style)
 frame.set_state_attribute('imf_type', visible=True, description="IMF type: ", options=['salpeter', 'chabrier', 'kroupa', 'alphaimf'], selected_label="salpeter")
 frame.set_state_attribute('imf_alpha', description="Set alpha: ", value=2.35, min=0, max=5)
 
 frame.set_state_attribute("imf_mass_group", visible=True, **group_style)
-frame.set_state_attribute('imf_mass_min', visible=True, description="IMF mass min [$M_{\odot}$]: ", value="1.0", **text_box_style)
-frame.set_state_attribute('imf_mass_max', visible=True, description="IMF mass max [$M_{\odot}$]: ", value="30.0", **text_box_style)
+frame.set_state_attribute('imf_mass_min', visible=True, description="IMF lower limit [$M_{\odot}$]: ", value="1.0", **text_box_style)
+frame.set_state_attribute('imf_mass_max', visible=True, description="IMF upper limit [$M_{\odot}$]: ", value="30.0", **text_box_style)
 
 frame.set_state_attribute('sn1a_group', visible=True, **group_style)
 frame.set_state_attribute('use_sn1a', visible=True, description="Include SNe Ia: ", value=True)
 frame.set_state_links("sn1a_link", [("use_sn1a", "value"), ("sn1a_rates", "visible")], directional=True)
 
-frame.set_state_attribute('sn1a_rates', description="SNe Ia rates: ", options=['maoz', 'wiersmaexp', 'wiersmagauss'])
+frame.set_state_attribute('sn1a_rates', description="SNe Ia rates: ", options=['Power law', 'Exponential', 'Gaussian'])
 
 frame.set_state_attribute('run_sim', visible=True, description="Run simulation", **button_style)
 
-frame.set_state_attribute('plot_type', states, visible=True, description="Plot type: ", options=["Total mass", "Species mass", "Species spectroscopic", "Mass range contributions"])
+frame.set_state_attribute("sim_responce", value="<p>Simulation data loaded.</p>", **group_style)
+frame.set_state_attribute("sim_responce", states, visible=True)
 
+frame.set_state_attribute('plot_type', states, visible=True, description="Plot type: ", options=["Total mass", "Species mass", "Species spectroscopic", "Mass range contributions"])
 
 def sel_imf_type(attribute, value):
     if value=="alphaimf":
@@ -122,8 +129,12 @@ def sel_imf_type(attribute, value):
         frame.set_attributes("imf_alpha", visible=False)
 
 def run_simulation(widget):
+    frame.set_attributes("sim_responce", visible=False)
     clear_output()
     pyplot.close("all")
+    
+    sn1a_map = {"Power law":"maoz", "Exponential":"wiersmaexp", "Gaussian":"wiermagauss"}
+    
     mgal = float(frame.get_attribute("mass_gas", "value"))
     iniZ = float(frame.get_attribute("init_Z", "value"))
     imf_type = frame.get_attribute("imf_type", "value")
@@ -132,11 +143,11 @@ def run_simulation(widget):
     mass_max = float(frame.get_attribute("imf_mass_max", "value"))
     imf_bdys = [mass_min, mass_max]
     sn1a_on = frame.get_attribute("use_sn1a", "value")
-    sn1a_rate = frame.get_attribute("sn1a_rates", "value")
+    sn1a_rate = sn1a_map[frame.get_attribute("sn1a_rates", "value")]
     dt = float(frame.get_attribute("dt", "value"))
     tend = float(frame.get_attribute("t_end", "value"))
     if iniZ==0.0:
-        data=s.sygma(mgal=mgal, iniZ=iniZ, imf_type=imf_type, alphaimf=alphaimf, imf_bdys=[99.0, 100.0], imf_bdys_pop3=imf_bdys, sn1a_on=sn1a_on,
+        data=s.sygma(mgal=mgal, iniZ=iniZ, imf_type=imf_type, alphaimf=alphaimf, imf_bdys=[10.1, 100.0], imf_bdys_pop3=imf_bdys, sn1a_on=sn1a_on,
                      sn1a_rate=sn1a_rate, dt=dt,tend=tend)
     else:
         data=s.sygma(mgal=mgal, iniZ=iniZ, imf_type=imf_type, alphaimf=alphaimf, imf_bdys=imf_bdys, sn1a_on=sn1a_on,
@@ -156,6 +167,13 @@ def sel_plot_type(attribute, value):
         frame.set_state("plot_spectro")
     elif value=="Mass range contributions":
         frame.set_state("plot_mass_range")
+    
+    iniZ = float(frame.get_attribute("init_Z", "value"))
+    if iniZ==0.0:
+        frame.set_attributes("source", options=["All", "AGB", "Massive"])
+    else:
+        frame.set_attributes("source", options=["All", "AGB", "SNe Ia", "Massive"])
+
         
 frame.set_state_callbacks("imf_type", sel_imf_type)
 frame.set_state_callbacks("run_sim", run_simulation, attribute=None, type="on_click")
@@ -187,6 +205,7 @@ frame.set_object("use_sn1a", widgets.Checkbox())
 frame.set_object("sn1a_rates", widgets.Dropdown())
 
 frame.set_object("run_sim", widgets.Button())
+frame.set_object("sim_responce", widgets.HTML())
 
 frame.set_object("plot_type", widgets.Dropdown())
 
@@ -198,7 +217,7 @@ frame.set_state_attribute("plot_name", **group_style)
 frame.set_state_attribute("plot_name", "plot_totmasses", visible=True, value="<h2>Plot: Total mass evolution</h2>")
 frame.set_state_attribute("plot_name", "plot_mass", visible=True, value="<h2>Plot: Species mass evolution</h2>")
 frame.set_state_attribute("plot_name", "plot_spectro", visible=True, value="<h2>Plot: Spectroscopic Mass evolution</h2>")
-frame.set_state_attribute("plot_name", "plot_mass_range", visible=True, value="<h2>Plot: Mass range contributions</h2>")
+frame.set_state_attribute("plot_name", "plot_mass_range", visible=True, value="<h2>Plot: Mass range contributions</h2><p>Only ejecta from AGB and massive stars are considered.</p>")
 
 frame.set_state_attribute("source", ["plot_totmasses", "plot_mass", "plot_spectro"], visible=True, description="Yield source: ", options=["All", "AGB", "SNe Ia", "Massive"], selected_label="All")
 frame.set_state_attribute("spieces_group", ["plot_mass", "plot_mass_range"], visible=True, **group_style)
@@ -208,13 +227,25 @@ frame.set_state_attribute("elem_numer", "plot_spectro", visible=True, descriptio
 frame.set_state_attribute("elem_denom", "plot_spectro", visible=True, description="Y-axis [X/Y], choose Y: ", options=elements, **text_box_style)
 frame.set_state_attribute("plot", states[1:], visible=True, description="Generate Plot", **button_style)
 
+def sel_source(attribute, value):
+    if value=="SNe Ia":
+        elements = elements_sn1a
+        isotopes = isotopes_sn1a
+    else:
+        elements = elements_all
+        isotopes = isotopes_all
+        frame.set_attributes("elem_numer", options=[])
+        frame.set_attributes("elem_denom", options=[])
+
+    frame.set_attributes("elem_numer", options=elements)
+    frame.set_attributes("elem_denom", options=elements)
+
 def sel_iso_or_elem(attribute, value):
     if value=="Isotopes":
         frame.set_attributes("spieces", description="Isotope: ", options=isotopes)
     elif value=="Elements":
         frame.set_attributes("spieces", description="Element: ", options=elements)
     
-
 def run(widget):
     clear_output()
     pyplot.close("all")
@@ -235,7 +266,8 @@ def run(widget):
         data.plot_spectro(yaxis=yaxis, source=source)
     elif state=="plot_mass_range":
         data.plot_mass_range_contributions(specie=spieces)
-    
+
+frame.set_state_callbacks("source", sel_source, state="plot_spectro")
 frame.set_state_callbacks("iso_or_elem", sel_iso_or_elem)
 frame.set_state_callbacks("plot", run, attribute=None, type="on_click")
 
