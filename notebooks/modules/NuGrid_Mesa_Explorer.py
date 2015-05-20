@@ -155,6 +155,7 @@ def load(widget):
     else:
         frame.set_state("default")
     frame.set_state_data("class_instance", data)
+    frame.set_attributes("select_plot", selected_label="")
     
         
 def sel_plot(widget, value):
