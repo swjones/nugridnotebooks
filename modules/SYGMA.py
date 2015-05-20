@@ -4,6 +4,8 @@ import os
 #temp fix
 if os.path.isdir("/home/nugrid/omega_sygma"):
     os.environ["SYGMADIR"] = "/home/nugrid/omega_sygma"
+#if os.path.isdir("/rpod3/lsiemens/omega_sygma"):
+#    os.environ["SYGMADIR"] = "/rpod3/lsiemens/omega_sygma"
 
 import sygma as s
 

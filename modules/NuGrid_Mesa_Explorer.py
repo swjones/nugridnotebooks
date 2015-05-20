@@ -13,7 +13,7 @@ frame.set_default_io_style(padding="0.25em", margin="0.25em", border_color="Ligh
 
 states_movie = ["movie", "movie_iso_abund", "movie_abu_chart"]
 states_nugrid = ["nugrid", "nugrid_w_data", "iso_abund", "abu_chart"]+states_movie
-states_mesa = ["mesa", "mesa_w_data", "hrd", "plot"]
+states_mesa = ["mesa", "mesa_w_data", "hrd", "plot", "kip_cont", "kippenhahn"]
 states_plotting = states_nugrid[2:]+states_mesa[2:]
 
 frame.add_state(states_nugrid)
@@ -65,6 +65,12 @@ frame.add_io_object("set_mass")
 frame.add_io_object("mass_range")
 frame.add_io_object("lbound")
 
+frame.add_display_object("kipp_settings")
+frame.add_io_object("plot_star_mass")
+frame.add_io_object("plot_c12border")
+frame.add_io_object("plot_engminus")
+frame.add_io_object("plot_engplus")
+
 frame.add_display_object("lim_settings")
 frame.add_io_object("set_lims")
 frame.add_io_object("ylim")
@@ -81,7 +87,7 @@ frame.add_io_object("generate_plot")
 
 frame.set_state_children("widget", ["page_plotting"], titles=["Plotting"])
 frame.set_state_children("page_plotting", ["warning_msg", "plot_name", "movie_type", "cycle", "cycle_range",
-                                           "xax", "yax", "stable", "mass_settings",
+                                           "xax", "yax", "stable", "mass_settings", "kipp_settings", 
                                            "lim_settings", "abu_settings", "stable", "generate_plot"])
 frame.set_state_children("xax", ["xaxis", "logx"])
 frame.set_state_children("yax", ["yaxis", "logy"])
@@ -89,6 +95,7 @@ frame.set_state_children("mass_settings", ["set_amass", "amass_range", "set_mass
                                            "lbound"])
 frame.set_state_children("lim_settings", ["set_lims", "xlim", "ylim"])
 frame.set_state_children("abu_settings", ["ilabel", "imlabel", "imagic"])
+frame.set_state_children("kipp_settings", ["plot_star_mass", "plot_c12border", "plot_engminus", "plot_engplus"])
 
 
 ###DEFAULT###
@@ -122,7 +129,7 @@ frame.set_state_attribute("select_plot", states_nugrid[1:], options={"":"nugrid_
 ###MESA###
 frame.set_state_attribute("select_module", states_mesa, options=["", "History", "Profile"], disabled=False)
 frame.set_state_attribute("load_data", states_mesa, disabled=False)
-frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot"}, disabled=False)
+frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot", "Kippenhahn":"kippenhahn", "Kippenhahan contour":"kip_cont"}, disabled=False)
 
 ###CALLBACKS###
 def sel_nugrid_mesa(widget, value):
@@ -153,7 +160,12 @@ def load(widget):
         frame.set_attributes("xaxis", options=data.cols.keys())
         frame.set_attributes("yaxis", options=data.cols.keys())
     else:
-        frame.set_state("default")
+        nugrid_or_mesa = frame.get_attribute("select_nugrid_mesa", 'value')
+        if nugrid_or_mesa == "NuGrid":
+            frame.set_state("nugrid")
+        elif nugrid_or_mesa == "Mesa":
+            frame.set_state("mesa")
+        
     frame.set_state_data("class_instance", data)
     frame.set_attributes("select_plot", selected_label="")
     
@@ -174,12 +186,19 @@ def sel_plot(widget, value):
                                   value=(mass_min, mass_max), step=mass_step)
         
         frame.set_state_attribute('cycle', ["iso_abund", "abu_chart"], min=min, max=max, step=step)
+    
+    if value == "kip_cont":
+        step = 1
+        min = 0
+        max = len(data.data)
+        
+        frame.set_state_attribute("xlim", "kip_cont", min=min, max=max, step=step, value=(min, max))    
         
     frame.set_state(value)
-    
+
 def change_module(widget, value):
     if value == "History":
-        frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot"})
+        frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot", "Kippenhahn":"kippenhahn", "Kippenhahan contour":"kip_cont"})
     elif value == "Profile":
         frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "Plot":"plot"})
 
@@ -216,6 +235,8 @@ frame.set_state_attribute('plot_name', "abu_chart", visible=True, value="<h2>Abu
 frame.set_state_attribute('plot_name', states_movie, visible=True, value="<h2>Movie</h2>")
 frame.set_state_attribute('plot_name', "hrd", visible=True, value="<h2>HR-Diagram</h2>")
 frame.set_state_attribute('plot_name', "plot", visible=True, value="<h2>Plot</h2>")
+frame.set_state_attribute('plot_name', "kippenhahn", visible=True, value="<h2>Kippenhahn</h2>")
+frame.set_state_attribute('plot_name', "kip_cont", visible=True, value="<h2>Kippenhahn contour</h2>")
 
 frame.set_state_attribute('movie_type', states_movie, visible=True, description="Movie Type: ", options={"":"movie", "Isotope abundance":"movie_iso_abund", "Abundance chart":"movie_abu_chart"})
 frame.set_state_attribute('cycle', ["iso_abund", "abu_chart"], visible=True, description="cycle: ")
@@ -239,21 +260,28 @@ frame.set_state_attribute("lbound", min=-12, max=0)#make sure the limits are set
 frame.set_state_links("amass_link", [("set_amass", "value"), ("amass_range", "visible")], ["iso_abund", "movie_iso_abund"], True)
 frame.set_state_links("mass_link", [("set_mass", "value"), ("mass_range", "visible")], ["iso_abund", "abu_chart"]+states_movie[1:], True)
 
-frame.set_state_attribute("lim_settings" , ["iso_abund", "abu_chart"]+states_movie[1:], visible=True, border_style="", border_radius="0em")
-frame.set_state_attribute("set_lims", ["iso_abund", "abu_chart"]+states_movie[1:], visible=True, description="Set axis limits: ")
-frame.set_state_attribute("xlim", ["abu_chart", "movie_abu_chart"], description="x-axis limits: ", min=0, max=130, value=(0, 130), step=0.5)
-frame.set_state_attribute("ylim", ["iso_abund", "abu_chart"]+states_movie[1:], description="y-axis limits: ")
+frame.set_state_attribute("lim_settings" , ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], visible=True, border_style="", border_radius="0em")
+frame.set_state_attribute("set_lims", ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], visible=True, description="Set axis limits: ")
+frame.set_state_attribute("xlim", ["abu_chart", "movie_abu_chart", "kip_cont"], description="x-axis limits: ", min=0, max=130, value=(0, 130), step=0.5)
+frame.set_state_attribute("ylim", ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], description="y-axis limits: ")
 frame.set_state_attribute("ylim", ["iso_abund", "movie_iso_abund"], min=-13, max=0, step=0.05, value=(-13, 0))
 frame.set_state_attribute("ylim", min=-13, max=0)#make sure the limits are set before the value
 frame.set_state_attribute("ylim", ["abu_chart", "movie_abu_chart"], min=0, max=130, value=(0, 130), step=0.5)
+frame.set_state_attribute("ylim", "kip_cont", min=0, max=1, value=(0, 1), step=0.005)
 
-frame.set_state_links("xlims_link", [("set_lims", "value"), ("xlim", "visible")], ["abu_chart", "movie_abu_chart"], True)
-frame.set_state_links("ylims_link", [("set_lims", "value"), ("ylim", "visible")], ["iso_abund", "abu_chart"]+states_movie[1:], True) 
+frame.set_state_links("xlims_link", [("set_lims", "value"), ("xlim", "visible")], ["abu_chart", "movie_abu_chart", "kip_cont"], True)
+frame.set_state_links("ylims_link", [("set_lims", "value"), ("ylim", "visible")], ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], True) 
 
 frame.set_state_attribute("abu_settings", ["abu_chart", "movie_abu_chart"], visible=True, border_style="", border_radius="0em")
 frame.set_state_attribute("ilabel", ["abu_chart", "movie_abu_chart"], visible=True, description="Element label")
 frame.set_state_attribute("imlabel", ["abu_chart", "movie_abu_chart"], visible=True, description="Isotope label")
 frame.set_state_attribute("imagic", ["abu_chart", "movie_abu_chart"], visible=True, description="Magic numbers")
+
+frame.set_state_attribute("kipp_settings", ["kippenhahn", "kip_cont"], visible=True, border_style="", border_radius="0em")
+frame.set_state_attribute("plot_star_mass", "kippenhahn", visible=True, description="Plot star mass: ")
+frame.set_state_attribute("plot_c12border", ["kippenhahn", "kip_cont"], visible=True, description="Show C-12 Border: ")
+frame.set_state_attribute("plot_engminus", "kip_cont", visible=True, description="Energy generation contours (eps_nuc>0): ")
+frame.set_state_attribute("plot_engplus", "kip_cont", visible=True, description="Energy generation contours (eos_nuc<0): ")
 
 frame.set_state_attribute("stable", "iso_abund", visible=True, description="stable: ")
 
@@ -315,6 +343,11 @@ def make_plot(widget):
     ilabel = frame.get_attribute("ilabel", "value")
     imlabel = frame.get_attribute("imlabel", "value")
     imagic = frame.get_attribute("imagic", "value")
+
+    plot_star_mass = frame.get_attribute("plot_star_mass", "value")
+    plot_c12border = frame.get_attribute("plot_c12border", "value")
+    plot_engminus = frame.get_attribute("plot_engminus", "value")
+    plot_engplus = frame.get_attribute("plot_engplus", "value")
         
     if state=="iso_abund":
         data.iso_abund(cycle, stable, amass, mass, ylim)
@@ -322,10 +355,15 @@ def make_plot(widget):
         plotaxis = [xlim[0], xlim[1], ylim[0], ylim[1]]
         data.abu_chart(cycle, mass, ilabel, imlabel, imagic=imagic, lbound=lbound, plotaxis=plotaxis, ifig=1)
     elif state=="plot":
-        print xax, yax
         data.plot(xax, yax, logx=logx, logy=logy)
     elif state=="hrd":
         data.hrd_new()
+    elif state=="kippenhahn":
+        data.kippenhahn(0, "model", plot_star_mass=plot_star_mass, c12_bm=plot_c12border)
+    elif state=="kip_cont":
+        xlims=[xlim[0], xlim[1]]
+        ylims=[ylim[0], ylim[1]]        
+        data.kip_cont(xlims=xlims, ylims=ylims, engenPlus=plot_engplus, engenMinus=plot_engminus, c12_boundary=plot_c12border)
     elif state=="movie_iso_abund":
         cycles = data.se.cycles
         cyc_min = cycles.index("%010d" % (cycle_range[0], ))
@@ -375,6 +413,12 @@ frame.set_object("abu_settings", widgets.HBox())
 frame.set_object("ilabel", widgets.Checkbox())
 frame.set_object("imlabel", widgets.Checkbox())
 frame.set_object("imagic", widgets.Checkbox())
+
+frame.set_object("kipp_settings", widgets.HBox())
+frame.set_object("plot_star_mass", widgets.Checkbox())
+frame.set_object("plot_c12border", widgets.Checkbox())
+frame.set_object("plot_engminus", widgets.Checkbox())
+frame.set_object("plot_engplus", widgets.Checkbox())
 
 frame.set_object("generate_plot", widgets.Button())
 
