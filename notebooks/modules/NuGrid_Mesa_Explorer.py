@@ -115,14 +115,14 @@ frame.set_state_attribute("select_plot", visible=True,
                           description="Select plot type: ", disabled=True)
 
 ###NUGRID###
-frame.set_state_attribute("select_module", states_nugrid, options={"H5 out":"se"}, disabled=False)
+frame.set_state_attribute("select_module", states_nugrid, options=["", "H5 out"], disabled=False)
 frame.set_state_attribute("load_data", states_nugrid, disabled=False)
-frame.set_state_attribute("select_plot", states_nugrid[1:], options={"Isotope abundance":"iso_abund", "Abundance chart":"abu_chart", "Movie":"movie"}, disabled=False)
+frame.set_state_attribute("select_plot", states_nugrid[1:], options={"":"nugrid_w_data", "Isotope abundance":"iso_abund", "Abundance chart":"abu_chart", "Movie":"movie"}, disabled=False)
 
 ###MESA###
-frame.set_state_attribute("select_module", states_mesa, options={"History":"star_log", "Profile":"mesa_profile"}, disabled=False, selected_label="History")
+frame.set_state_attribute("select_module", states_mesa, options=["", "History", "Profile"], disabled=False)
 frame.set_state_attribute("load_data", states_mesa, disabled=False)
-frame.set_state_attribute("select_plot", states_mesa[1:], options={"HR-Diagram":"hrd", "Plot":"plot"}, disabled=False)
+frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot"}, disabled=False)
 
 ###CALLBACKS###
 def sel_nugrid_mesa(widget, value):
@@ -139,15 +139,15 @@ def load(widget):
     mass = float(frame.get_attribute("mass", "value"))
     Z = float(frame.get_attribute("Z", "value"))
     module = frame.get_attribute("select_module", "value")
-    if module == "se":
+    if module == "H5 out":
         data = mp.se(mass=mass, Z=Z)
         frame.set_state("nugrid_w_data")
-    elif module == "star_log":
+    elif module == "History":
         data = ms.history_data(mass=mass, Z=Z)
         frame.set_state("mesa_w_data")
         frame.set_attributes("xaxis", options=data.cols.keys())
         frame.set_attributes("yaxis", options=data.cols.keys())
-    elif module == "mesa_profile":
+    elif module == "Profile":
         data = ms.mesa_profile(mass=mass, Z=Z)
         frame.set_state("mesa_w_data")
         frame.set_attributes("xaxis", options=data.cols.keys())
@@ -155,6 +155,8 @@ def load(widget):
     else:
         frame.set_state("default")
     frame.set_state_data("class_instance", data)
+    frame.set_attributes("select_plot", selected_label="")
+    
         
 def sel_plot(widget, value):
     data = frame.get_state_data("class_instance")
@@ -176,10 +178,10 @@ def sel_plot(widget, value):
     frame.set_state(value)
     
 def change_module(widget, value):
-    if value == "star_log":
-        frame.set_state_attribute("select_plot", states_mesa[1:], options={"HR-Diagram":"hrd", "Plot":"plot"})
-    elif value == "mesa_profile":
-        frame.set_state_attribute("select_plot", states_mesa[1:], options={"Plot":"plot"})
+    if value == "History":
+        frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot"})
+    elif value == "Profile":
+        frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "Plot":"plot"})
 
 frame.set_state_callbacks("select_nugrid_mesa", sel_nugrid_mesa)
 frame.set_state_callbacks("select_module", change_module)
@@ -205,6 +207,7 @@ frame.set_object("select_plot", widgets.Dropdown())
 frame.set_state_attribute('page_plotting', visible=True)
 
 frame.set_state_attribute('warning_msg', visible=True, value="<h3>Error: No data loaded!</h3>")
+frame.set_state_attribute("warning_msg", ["nugrid_w_data", "mesa_w_data"], value="<h3>Error: No plot selected!</h3>")
 frame.set_state_attribute("warning_msg", states_plotting, visible=False)
 
 frame.set_state_attribute("plot_name", border_style="", border_radius="0em")
@@ -278,7 +281,6 @@ def sel_movie_plot(widget, value):
 def make_plot(widget):
     clear_output()
     pyplot.close("all")
-    pyplot.figure(1)
     state = frame.get_state()
     
     data = frame.get_state_data("class_instance")
@@ -329,14 +331,15 @@ def make_plot(widget):
         cyc_min = cycles.index("%010d" % (cycle_range[0], ))
         cyc_max = cycles.index("%010d" % (cycle_range[1], ))
         cycles = cycles[cyc_min:cyc_max]
-        data.movie(cycles, "iso_abund", amass_range=amass, mass_range=mass, ylim=ylim)
+        display(data.movie(cycles, "iso_abund", amass_range=amass, mass_range=mass, ylim=ylim))
     elif state=="movie_abu_chart":
         cycles = data.se.cycles
         cyc_min = cycles.index("%010d" % (cycle_range[0], ))
         cyc_max = cycles.index("%010d" % (cycle_range[1], ))
         cycles = cycles[cyc_min:cyc_max]
         plotaxis = [xlim[0], xlim[1], ylim[0], ylim[1]]
-        data.movie(cycles, "abu_chart", mass_range=mass, ilabel=ilabel, imlabel=imlabel, imagic=imagic, plotaxis=plotaxis)
+        display(data.movie(cycles, "abu_chart", mass_range=mass, ilabel=ilabel, imlabel=imlabel, imagic=imagic, plotaxis=plotaxis))
+
 
 frame.set_state_callbacks("movie_type", sel_movie_plot)
 frame.set_state_callbacks("generate_plot", make_plot, attribute=None, type="on_click")
