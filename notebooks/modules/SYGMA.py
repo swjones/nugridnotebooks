@@ -23,8 +23,8 @@ elements_all=['H','He','Li','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S'
 isotopes_sn1a=['C-12','C-13','N-14','N-15','O-16','O-17','O-18','F-19','Ne-20','Ne-21','Ne-22','Na-23','Mg-24','Mg-25','Mg-26','Al-27','Si-28','Si-29','Si-30','P-31','S-32','S-33','S-34','S-36','Cl-35','Cl-37','Ar-36','Ar-38','Ar-40','K-39','K-40','K-41','Ca-40','Ca-42','Ca-43','Ca-44','Ca-46','Ca-48','Sc-45','Ti-46','Ti-47','Ti-48','Ti-49','Ti-50','V-50','V-51','Cr-50','Cr-52','Cr-53','Cr-54','Mn-55','Fe-54','Fe-56','Fe-57','Fe-58','Co-59','Ni-58','Ni-60','Ni-61','Ni-62','Ni-64']
 elements_sn1a=['C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni']
 
-elements=elements_all
-isotopes=isotopes_all
+frame.set_state_data("elements", elements_all)
+frame.set_state_data("isotopes", isotopes_all)
 
 frame.add_display_object("window")
 frame.add_io_object("title")
@@ -95,15 +95,15 @@ frame.set_state_attribute('widget', visible=True, **group_style)
 frame.set_state_attribute('sim_page', visible=True)
 frame.set_state_attribute("mass_Z_group", visible=True, **group_style)
 frame.set_state_attribute("mass_gas", visible=True, description="Total stellar mass [$M_{\odot}$]:", value="1.0", **text_box_style)
-frame.set_state_attribute('init_Z', visible=True, description="Initial metallicity: ", options=["0.02", "0.01", "0.006", "0.0001", "0.0"])
+frame.set_state_attribute('init_Z', visible=True, description="Initial metallicity: ", options=["0.02", "0.01", "0.006", "0.001", "0.0001", "0.0"])
 
 frame.set_state_attribute('time_group', visible=True, **group_style)
 frame.set_state_attribute('t_end', visible=True, description="Final time [yrs]: ", value="1.0e10", **text_box_style)
 frame.set_state_attribute('dt', visible=True, description="Time step [yrs]: ", value="1.0e7", **text_box_style)
 
 frame.set_state_attribute('imf_type_group', visible=True, **group_style)
-frame.set_state_attribute('imf_type', visible=True, description="IMF type: ", options=['salpeter', 'chabrier', 'kroupa', 'alphaimf'], selected_label="salpeter")
-frame.set_state_attribute('imf_alpha', description="Set alpha: ", value=2.35, min=0, max=5)
+frame.set_state_attribute('imf_type', visible=True, description="IMF type: ", options=['salpeter', 'chabrier', 'kroupa', 'alphaimf'])
+frame.set_state_attribute('imf_alpha', description="Set alpha: ", min=0, max=5)
 
 frame.set_state_attribute("imf_mass_group", visible=True, **group_style)
 frame.set_state_attribute('imf_mass_min', visible=True, description="IMF lower limit [$M_{\odot}$]: ", value="1.0", **text_box_style)
@@ -124,8 +124,10 @@ frame.set_state_attribute('plot_type', states, visible=True, description="Plot t
 
 def sel_imf_type(attribute, value):
     if value=="alphaimf":
-        frame.set_attributes("imf_alpha", visible=True)
+        frame.set_state_attribute("imf_alpha", visible=True)
+        frame.set_attributes("imf_alpha", visible=True, value=2.35)
     else:
+        frame.set_state_attribute("imf_alpha", visible=False)
         frame.set_attributes("imf_alpha", visible=False)
 
 def run_simulation(widget):
@@ -133,7 +135,7 @@ def run_simulation(widget):
     clear_output()
     pyplot.close("all")
     
-    sn1a_map = {"Power law":"maoz", "Exponential":"wiersmaexp", "Gaussian":"wiermagauss"}
+    sn1a_map = {"Power law":"maoz", "Exponential":"wiersmaexp", "Gaussian":"wiersmagauss"}
     
     mgal = float(frame.get_attribute("mass_gas", "value"))
     iniZ = float(frame.get_attribute("init_Z", "value"))
@@ -222,25 +224,35 @@ frame.set_state_attribute("plot_name", "plot_mass_range", visible=True, value="<
 frame.set_state_attribute("source", ["plot_totmasses", "plot_mass", "plot_spectro"], visible=True, description="Yield source: ", options=["All", "AGB", "SNe Ia", "Massive"], selected_label="All")
 frame.set_state_attribute("spieces_group", ["plot_mass", "plot_mass_range"], visible=True, **group_style)
 frame.set_state_attribute("iso_or_elem", visible=True, description="Spieces type: ", options=["Elements", "Isotopes"], selected_label="Elements")
-frame.set_state_attribute("spieces", visible=True, description="Element: ", options=elements, **text_box_style)
-frame.set_state_attribute("elem_numer", "plot_spectro", visible=True, description="Y-axis [X/Y], choose X: ", options=elements, **text_box_style)
-frame.set_state_attribute("elem_denom", "plot_spectro", visible=True, description="Y-axis [X/Y], choose Y: ", options=elements, **text_box_style)
+frame.set_state_attribute("spieces", visible=True, description="Element: ", options=elements_all, **text_box_style)
+frame.set_state_attribute("elem_numer", "plot_spectro", visible=True, description="Y-axis [X/Y], choose X: ", options=elements_all, **text_box_style)
+frame.set_state_attribute("elem_denom", "plot_spectro", visible=True, description="Y-axis [X/Y], choose Y: ", options=elements_all, **text_box_style)
 frame.set_state_attribute("plot", states[1:], visible=True, description="Generate Plot", **button_style)
 
 def sel_source(attribute, value):
     if value=="SNe Ia":
-        elements = elements_sn1a
-        isotopes = isotopes_sn1a
+        frame.set_state_data("elements", elements_sn1a)
+        frame.set_state_data("isotopes", isotopes_sn1a)
     else:
-        elements = elements_all
-        isotopes = isotopes_all
+        frame.set_state_data("elements", elements_all)
+        frame.set_state_data("isotopes", isotopes_all)
         frame.set_attributes("elem_numer", options=[])
         frame.set_attributes("elem_denom", options=[])
+        frame.set_attributes("spieces", options=[])
 
+    elements = frame.get_state_data("elements")
+    isotopes = frame.get_state_data("isotopes")
     frame.set_attributes("elem_numer", options=elements)
     frame.set_attributes("elem_denom", options=elements)
+    
+    if frame.get_attribute("iso_or_elem", "value")=="Isotopes":
+        frame.set_attributes("spieces", description="Isotope: ", options=isotopes)
+    elif frame.get_attribute("iso_or_elem", "value")=="Elements":
+        frame.set_attributes("spieces", description="Element: ", options=elements)
 
 def sel_iso_or_elem(attribute, value):
+    elements = frame.get_state_data("elements")
+    isotopes = frame.get_state_data("isotopes")
     if value=="Isotopes":
         frame.set_attributes("spieces", description="Isotope: ", options=isotopes)
     elif value=="Elements":
@@ -267,7 +279,7 @@ def run(widget):
     elif state=="plot_mass_range":
         data.plot_mass_range_contributions(specie=spieces)
 
-frame.set_state_callbacks("source", sel_source, state="plot_spectro")
+frame.set_state_callbacks("source", sel_source, state=["plot_spectro", "plot_mass"])
 frame.set_state_callbacks("iso_or_elem", sel_iso_or_elem)
 frame.set_state_callbacks("plot", run, attribute=None, type="on_click")
 

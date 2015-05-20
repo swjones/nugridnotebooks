@@ -111,7 +111,6 @@ class framework():
         if state in self._state_list:
             self._state = state
             self.update()
-            print state#TEMP REMOVE -------------------------- TEMP
         else:
             raise ValueError("no state: "+state+" defined!")
 
