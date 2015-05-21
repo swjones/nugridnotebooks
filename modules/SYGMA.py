@@ -97,7 +97,7 @@ frame.set_state_children("spieces_group", ["iso_or_elem", "spieces"])
 frame.set_state_data("sygma", None)
 
 frame.set_state_attribute('window', visible=True, **group_style)
-frame.set_state_attribute('title', visible=True, value="<h1>SYGMA<h1>")
+frame.set_state_attribute('title', visible=True, value="<h1>SYGMA</h1>")
 frame.set_state_attribute('widget', visible=True, **group_style)
 
 frame.set_state_attribute('sim_page', visible=True)
