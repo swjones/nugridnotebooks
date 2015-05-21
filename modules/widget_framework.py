@@ -180,13 +180,13 @@ class framework():
             else:
                 raise ValueError("no object: "+obj_name+" defined!")
             
-    def set_state_children(self, obj_name, children, state="default", titles=None):
+    def set_state_children(self, obj_name, children, state="default", titles=None, append=True):
         """ 
         Set chidren of the display widgets, children should be a list of names
         """
         if not isinstance(state, basestring):
             for one_state in state:
-                self.set_state_children(obj_name, children, one_state, titles)
+                self.set_state_children(obj_name, children, one_state, titles, append)
         else:
             if state in self._state_list:
                 if obj_name in self._display_list:
@@ -194,6 +194,8 @@ class framework():
                         self._children[state]={}
                     if titles == None:
                         if not (obj_name in self._children[state]):
+                            self._children[state][obj_name] = (False, [])
+                        if not append:
                             self._children[state][obj_name] = (False, [])
                         for child_name in children:
                             if child_name in self._object_list:
@@ -203,6 +205,8 @@ class framework():
                                 raise ValueError("no object: "+child_name+" defined!")
                     else:
                         if not (obj_name in self._children[state]):
+                            self._children[state][obj_name] = (True, [], [])
+                        if not append:
                             self._children[state][obj_name] = (True, [], [])
                         for i, child_name in enumerate(children):
                             if child_name in self._object_list:
