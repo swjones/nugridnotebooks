@@ -41,6 +41,25 @@ frame.set_state_data("runs",[],"alpha")
 run_count = 0
 widget_count = 0
 
+def float_text(string):
+    for i in xrange(len(string)):
+        if float_substring(string[:len(string)-i]):
+            return string[:len(string)-i]
+    return ""
+
+def float_substring(string):
+    string=string.strip()
+    if string == "":
+        return True
+    special_chars = ["+", "-", ".", "e", "E"]
+    try:
+        if string[-1] in special_chars:
+            string = string + "0"
+        float(string)
+        return True
+    except ValueError:
+        return False
+
 def add_run(state, data, name):
     global widget_count
     widget_count += 1
@@ -144,6 +163,14 @@ frame.set_state_attribute("select_elem", visible=True, description="Select Eleme
 frame.set_state_attribute("plot", visible=True, description="Generate Plot", **button_style)
 frame.set_state_attribute("warning_msg", visible=False, value="<h3>Error no runs selected!</h3>", **group_style)
 
+def loading_mass_handler(name, value):
+    if (value.strip())[0] == "-":
+        value = "0.0"
+    frame.set_attributes("loading_mass", value=float_text(value))
+    
+def sn1a_pmil_handler(name, value):
+    frame.set_attributes("sn1a_pmil", value=float_text(value))
+
 def simulation_run(widget):
     global run_count
     run_count += 1
@@ -224,6 +251,8 @@ def generate_plot(widget):
     else:
         frame.set_attributes("warning_msg", visible=True, value="<h3>Error no run data!</h3>")
     
+frame.set_state_callbacks("loading_mass", loading_mass_handler)
+frame.set_state_callbacks("sn1a_pmil", sn1a_pmil_handler)
 frame.set_state_callbacks("run_sim", simulation_run, attribute=None, type="on_click")
 frame.set_state_callbacks("rm_sim", remove_simulation, attribute=None, type="on_click")
 frame.set_state_callbacks("simulation", sel_tab, "selected_index")
