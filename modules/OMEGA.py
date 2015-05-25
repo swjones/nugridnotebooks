@@ -10,7 +10,7 @@ import omega
 import widget_framework as framework
 from IPython.html import widgets
 from IPython.display import display, clear_output
-from matplotlib import pyplot
+from matplotlib import pyplot, colors
 
 tablist = ["sculptor", "alpha"]
 yield_table_names = ["NuGrid raw", "NuGrid 25Mo Nomoto 2006", "NuGrid 30Mo Nomoto 2006", "NuGrid 40Mo Nomoto 2006"]
@@ -18,10 +18,13 @@ yield_tables = {"NuGrid raw":'yield_tables/isotope_yield_table.txt',
                 "NuGrid 25Mo Nomoto 2006":'yield_tables/isotope_yield_table_N06_25Mo_full_IMF.txt', 
                 "NuGrid 30Mo Nomoto 2006":'yield_tables/isotope_yield_table_N06_30Mo_full_IMF.txt', 
                 "NuGrid 40Mo Nomoto 2006":'yield_tables/isotope_yield_table_N06_40Mo_full_IMF.txt'}
-elements = ['O', 'Mg', 'Si', 'S', 'Ca']
+elements_sculpt = ['Mg', 'Si', 'Ca', 'Ti']
+elements_alpha = ['O', 'Mg', 'Si', 'S', 'Ca']
 
 line_styles=['-', '--', '-.', ':']
 line_colors=['b', 'g', 'r', 'c', 'm', 'y', 'k']
+
+color_convert = colors.ColorConverter()
 
 frame = framework.framework()
 frame.set_default_display_style(padding="0.25em",background_color="white", border_color="LightGrey", border_radius="0.5em")
@@ -159,7 +162,9 @@ frame.set_state_attribute("plotting_title", visible=True, value="<h2>Plotting op
 frame.set_state_attribute("runs", visible=True)
 frame.set_state_attribute("runs_title", visible=True, value="<h2>Runs</h2>", **group_style)
 
-frame.set_state_attribute("select_elem", visible=True, description="Select Element: ", options=elements, **text_box_style)
+frame.set_state_attribute("select_elem", visible=True, description="Select Element: ", **text_box_style)
+frame.set_state_attribute("select_elem", "sculpt", options=elements_sculpt)
+frame.set_state_attribute("select_elem", "alpha", options=elements_alpha)
 frame.set_state_attribute("plot", visible=True, description="Generate Plot", **button_style)
 frame.set_state_attribute("warning_msg", visible=False, value="<h3>Error no runs selected!</h3>", **group_style)
 
@@ -193,6 +198,7 @@ def simulation_run(widget):
     
     add_run(state, data, name)
     frame.update()
+    frame.set_attributes("run_name", value="")
     
 def remove_simulation(widget):
     state = frame.get_state()
@@ -221,13 +227,26 @@ def generate_plot(widget):
     
     if len(data) != 0:
         element = frame.get_attribute("select_elem", "value")
-        yaxis = '['+element+'/Fe]'
         for i in xrange(len(data)):
             instance, name, line_style, line_color, widget_name = data[i]
+            yaxis = '['+element+'/Fe]'
+            label = name+", "+yaxis
             selected = frame.get_attribute(widget_name, "value")
             if selected:
                 plotted_data=True
-                instance.plot_spectro(xaxis="[Fe/H]", yaxis=yaxis, show_data=comp_data, color=line_color,
+                instance.plot_spectro(xaxis="[Fe/H]", yaxis=yaxis, show_data=comp_data, color=color_convert.to_rgba("w", 0.8),
+                                      shape="-", marker=" ", linewidth=4, fsize=[10, 4.5], show_legend=False)
+                if comp_data:
+                    comp_data=False
+
+        for i in xrange(len(data)):
+            instance, name, line_style, line_color, widget_name = data[i]
+            yaxis = '['+element+'/Fe]'
+            label = name+", "+yaxis
+            selected = frame.get_attribute(widget_name, "value")
+            if selected:
+                plotted_data=True
+                instance.plot_spectro(xaxis="[Fe/H]", yaxis=yaxis, label=label, show_data=comp_data, color=line_color,
                                       shape=line_style, marker=" ", linewidth=2, fsize=[10, 4.5])
                 if comp_data:
                     comp_data=False
