@@ -8,6 +8,7 @@ if os.path.isdir("/home/nugrid/omega_sygma"):
 import omega
 
 import widget_framework as framework
+from widget_utils import float_text
 from IPython.html import widgets
 from IPython.display import display, clear_output
 from matplotlib import pyplot, colors
@@ -43,25 +44,6 @@ frame.set_state_data("runs",[],"alpha")
 
 run_count = 0
 widget_count = 0
-
-def float_text(string):
-    for i in xrange(len(string)):
-        if float_substring(string[:len(string)-i]):
-            return string[:len(string)-i]
-    return ""
-
-def float_substring(string):
-    string=string.strip()
-    if string == "":
-        return True
-    special_chars = ["+", "-", ".", "e", "E"]
-    try:
-        if string[-1] in special_chars:
-            string = string + "0"
-        float(string)
-        return True
-    except ValueError:
-        return False
 
 def add_run(state, data, name):
     global widget_count

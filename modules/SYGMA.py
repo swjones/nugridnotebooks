@@ -10,6 +10,7 @@ if os.path.isdir("/home/nugrid/omega_sygma"):
 import sygma as s
 
 import widget_framework as framework
+from widget_utils import float_text
 from IPython.html import widgets
 from IPython.display import display, clear_output
 from matplotlib import pyplot
@@ -130,6 +131,21 @@ frame.set_state_attribute("sim_responce", states, visible=True)
 
 frame.set_state_attribute('plot_type', states, visible=True, description="Plot type: ", options=["Total mass", "Species mass", "Species spectroscopic", "Mass range contributions"])
 
+def mass_gas_handler(name, value):
+    frame.set_attributes("mass_gas", value=float_text(value))
+
+def t_end_handler(name, value):
+    frame.set_attributes("t_end", value=float_text(value))
+
+def dt_handler(name, value):
+    frame.set_attributes("dt", value=float_text(value))
+
+def imf_mass_min_handler(name, value):
+    frame.set_attributes("imf_mass_min", value=float_text(value))
+
+def imf_mass_max_handler(name, value):
+    frame.set_attributes("imf_mass_max", value=float_text(value))
+
 def sel_imf_type(attribute, value):
     if value=="alphaimf":
         frame.set_state_attribute("imf_alpha", visible=True)
@@ -184,7 +200,12 @@ def sel_plot_type(attribute, value):
     else:
         frame.set_attributes("source", options=["All", "AGB", "SNe Ia", "Massive"])
 
-        
+
+frame.set_state_callbacks("mass_gas", mass_gas_handler)        
+frame.set_state_callbacks("t_end", t_end_handler)        
+frame.set_state_callbacks("dt", dt_handler)        
+frame.set_state_callbacks("imf_mass_min", imf_mass_min_handler)        
+frame.set_state_callbacks("imf_mass_max", imf_mass_max_handler)        
 frame.set_state_callbacks("imf_type", sel_imf_type)
 frame.set_state_callbacks("run_sim", run_simulation, attribute=None, type="on_click")
 frame.set_state_callbacks("plot_type", sel_plot_type)
