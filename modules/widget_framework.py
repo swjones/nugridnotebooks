@@ -56,7 +56,7 @@ class framework():
             
             if not "visible" in attributes:
                 attributes["visible"] = False
-            
+
             self.set_attributes(obj_name, **attributes)
 
         ##apply links
@@ -132,6 +132,7 @@ class framework():
         if obj_name in self._object_list:
             if state in self._state_list:
                 self.set_state(state)
+                self.set_state(state)#look into set_attributes, border_style is not set properly the first time
                 display(self._object_list[obj_name])
             else:
                 raise ValueError("no state: "+state+" defined!")
@@ -331,10 +332,9 @@ class framework():
         
     def set_attributes(self, obj_name, **kwargs):
         if obj_name in self._object_list:
-            obj = self._object_list[obj_name]
             for attr in kwargs:
-                if hasattr(obj,attr):
-                    setattr(obj, attr, kwargs[attr])
+                if hasattr(self._object_list[obj_name], attr):
+                    setattr(self._object_list[obj_name], attr, kwargs[attr])
                 else:
                     raise AttributeError(obj_name+" does not have attribute "+attr)
         else:
