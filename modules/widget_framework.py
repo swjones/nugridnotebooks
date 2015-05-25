@@ -29,61 +29,105 @@ class framework():
         self.add_state("default")
         
     def update(self):
-        self._update()#apply all default settings
-        if self._state != "default":
-            self._update(self._state)#apply state specific settings
+        self._update(self._state)
         
     def _update(self, state="default"):
-        if state == "default":
-            for obj_name in self._object_list:
-                if obj_name in self._display_list:
-                    self.set_attributes(obj_name, **self._default_display_style)
-                elif obj_name in self._io_list:
-                    self.set_attributes(obj_name, **self._default_io_style)
-                else:
-                    raise ValueError("the object: "+obj_name+" is not assigned as a io or display object")
-                self._object_list[obj_name].visible=False
-
-        if state in self._attributes:
-            for obj_name in self._attributes[state]:
-                self.set_attributes(obj_name, **self._attributes[state][obj_name])
+        for obj_name in self._object_list:
+            ##apply attributes
+            default_style = {}
+            if obj_name in self._display_list:
+                default_style = self._default_display_style
+            elif obj_name in self._io_list:
+                default_style = self._default_io_style
                 
-        if state in self._links:
-            for obj_name in self._links[state]:
-                for link_name in self._link_object:
-                    self._link_object[link_name].unlink()
-                self._link_objects = {}
-                for link_name in self._links[state]:
-                    directional, links_list = self._links[state][link_name]
-                    links = []
-                    for link in links_list:
-                        links.append((self._object_list[link[0]], link[1]))
-                    if directional:
-                        self._link_objects[link_name] = traitlets.dlink(*links)
-                    else:
-                        self._link_objects[link_name] = traitlets.link(*links)
+            default_attributes = {}
+            if "default" in self._attributes:
+                if obj_name in self._attributes["default"]:
+                    default_attributes = self._attributes["default"][obj_name]
+            
+            state_attributes = {}
+            if state in self._attributes:
+                if obj_name in self._attributes[state]:
+                    state_attributes = self._attributes[state][obj_name]
+            
+            attributes = default_style.copy()
+            attributes.update(default_attributes)
+            attributes.update(state_attributes)
+            
+            if not "visible" in attributes:
+                attributes["visible"] = False
+            
+            self.set_attributes(obj_name, **attributes)
+
+        ##apply links
+        for link_name in self._link_object: #clear link objects
+            self._link_object[link_name].unlink()
+        self._link_objects = {}
+
+        default_links = {}
+        if "default" in self._links:
+            default_links = self._links["default"]
         
-        if state in self._callbacks:
-            for obj_name in self._callbacks[state]:
-                for type in self._callbacks[state][obj_name]:
-                    if hasattr(self._object_list[obj_name], type):
-                        if type == "on_trait_change":
-                            self._object_list[obj_name].on_trait_change(*self._callbacks[state][obj_name][type])
-                        elif type == "on_click":
-                            self._object_list[obj_name].on_click(self._callbacks[state][obj_name][type][0])
-                        elif type == "on_submit":
-                            self._object_list[obj_name].on_submit(self._callbacks[state][obj_name][type][0])
-                        else:
-                            raise ValueError("Widget have no method called: "+type)
+        state_links = {}
+        if state in self._links:
+            state_links = self._links[state]
+        
+        links_dict = default_links.copy()
+        links_dict.update(state_links)
+        
+        for link_name in links_dict:
+            directional, links_list = links_dict[link_name]
+            links = []
+            for link in links_list:
+                links.append((self._object_list[link[0]], link[1]))
+            if directional:
+                self._link_objects[link_name] = traitlets.dlink(*links)
+            else:
+                self._link_objects[link_name] = traitlets.link(*links)
 
+
+        ##callbacks
+        default_callbacks = {}
+        if "default" in self._callbacks:
+            default_callbacks = self._callbacks["default"]
+        
+        state_callbacks = {}
+        if state in self._callbacks:
+            state_callbacks = self._callbacks[state]
+            
+        callbacks = default_callbacks.copy()
+        callbacks.update(state_callbacks)
+        
+        for obj_name in callbacks:
+            for type in callbacks[obj_name]:
+                if hasattr(self._object_list[obj_name], type):
+                    if type == "on_trait_change":
+                        self._object_list[obj_name].on_trait_change(*callbacks[obj_name][type])
+                    elif type == "on_click":
+                        self._object_list[obj_name].on_click(callbacks[obj_name][type][0])
+                    elif type == "on_submit":
+                        self._object_list[obj_name].on_submit(callbacks[obj_name][type][0])
+                    else:
+                        raise ValueError("the object: "+obj_name+" has no method called: "+type)
+        ##children
+        default_children = {}
+        if "default" in self._children:
+            default_children = self._children["default"]
+            
+        state_children = {}
         if state in self._children:
-            for obj_name in self._children[state]:
-                if self._children[state][obj_name][0]:
-                    for i, title in enumerate(self._children[state][obj_name][2]):
-                        self._object_list[obj_name].set_title(i, title)
-                children_list = [self._object_list[child_name] for child_name in self._children[state][obj_name][1]]
-                self._object_list[obj_name].children = children_list
-                
+            state_children = self._children[state]
+            
+        children = default_children.copy()
+        children.update(state_children)
+
+        for obj_name in children:
+            if children[obj_name][0]:
+                for i, title in enumerate(children[obj_name][2]):
+                    self._object_list[obj_name].set_title(i, title) 
+            children_list = [self._object_list[child_name] for child_name in children[obj_name][1]]
+            self._object_list[obj_name].children = children_list
+
     def display_object(self, obj_name, state="default"):
         if obj_name in self._object_list:
             if state in self._state_list:
