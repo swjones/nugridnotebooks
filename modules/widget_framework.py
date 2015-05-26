@@ -132,7 +132,6 @@ class framework():
         if obj_name in self._object_list:
             if state in self._state_list:
                 self.set_state(state)
-                self.set_state(state)#look into set_attributes, border_style is not set properly the first time
                 display(self._object_list[obj_name])
             else:
                 raise ValueError("no state: "+state+" defined!")
@@ -307,6 +306,24 @@ class framework():
         else:
             self._display_list.append(obj_name)
             self._object_list[obj_name] = None
+            
+    def remove_object(self, obj_name):
+        if obj_name in self._display_list:
+            index = self._display_list.index(obj_name)
+            del self._display_list[index]
+        elif obj_name in self._io_list:
+            index = self._io_list.index(obj_name)
+            del self._io_list[index]
+        else:
+            raise ValueError("The object: "+obj_name+" is not defined!")
+        
+        if obj_name in self._object_list:
+            if self._object_list[obj_name] != None:
+                self._object_list[obj_name].close()
+            
+            del self._object_list[obj_name]
+        else:
+            raise ValueError("The object: "+obj_name+" is not defined!")        
 
     def add_io_object(self, obj_name):
         """ 

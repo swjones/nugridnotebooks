@@ -31,9 +31,10 @@ frame = framework.framework()
 frame.set_default_display_style(padding="0.25em",background_color="white", border_color="LightGrey", border_radius="0.5em")
 frame.set_default_io_style(padding="0.25em", margin="0.25em", border_color="LightGrey", border_radius="0.5em")
 
-group_style = {"border_style":"", "border_radius":"0em"}
+group_style = {"border_style":"none", "border_radius":"0em"}
 text_box_style = {"width":"10em"}
 button_style = {"font_size":"1.25em", "font_weight":"bold"}
+first_tab_style = {"border_radius":"0em 0.5em 0.5em 0.5em"}
 
 states = ["sculpt", "alpha"]
 
@@ -69,7 +70,9 @@ def remove_runs(state):
     tmp_data=[]
     for i in xrange(len(state_data)):
         widget_name = state_data[i][4]
-        if not frame.get_attribute(widget_name, "value"):
+        if frame.get_attribute(widget_name, "value"):
+            frame.remove_object(widget_name)
+        else:
             children.append(widget_name)
             tmp_data.append(state_data[i])
     state_data=tmp_data
@@ -123,7 +126,7 @@ frame.set_state_attribute('title', visible=True, value="<h1>OMEGA</h1>")
 frame.set_state_attribute('widget', visible=True, **group_style)
 
 frame.set_state_attribute('simulation', visible=True, **group_style)
-frame.set_state_attribute('sculptor', visible=True)
+frame.set_state_attribute('sculptor', visible=True, **first_tab_style)
 frame.set_state_attribute('alpha', visible=True)
 
 frame.set_state_attribute("baryon_table_name_group", visible=True, **group_style)

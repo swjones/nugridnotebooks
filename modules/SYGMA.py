@@ -19,9 +19,10 @@ frame = framework.framework()
 frame.set_default_display_style(padding="0.25em",background_color="white", border_color="LightGrey", border_radius="0.5em")
 frame.set_default_io_style(padding="0.25em", margin="0.25em", border_color="LightGrey", border_radius="0.5em")
 
-group_style = {"border_style":"", "border_radius":"0em"}
+group_style = {"border_style":"none", "border_radius":"0em"}
 text_box_style = {"width":"10em"}
 button_style = {"font_size":"1.25em", "font_weight":"bold"}
+first_tab_style = {"border_radius":"0em 0.5em 0.5em 0.5em"}
 
 states = ["run_sim", "plot_totmasses", "plot_mass", "plot_spectro", "plot_mass_range"]
 
@@ -101,7 +102,7 @@ frame.set_state_attribute('window', visible=True, **group_style)
 frame.set_state_attribute('title', visible=True, value="<h1>SYGMA</h1>")
 frame.set_state_attribute('widget', visible=True, **group_style)
 
-frame.set_state_attribute('sim_page', visible=True)
+frame.set_state_attribute('sim_page', visible=True, **first_tab_style)
 frame.set_state_attribute("mass_Z_group", visible=True, **group_style)
 frame.set_state_attribute("mass_gas", visible=True, description="Total stellar mass [$M_{\odot}$]:", value="1.0", **text_box_style)
 frame.set_state_attribute('init_Z', visible=True, description="Initial metallicity: ", options=["0.02", "0.01", "0.006", "0.001", "0.0001", "0.0"])

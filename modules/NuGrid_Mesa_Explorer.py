@@ -10,6 +10,9 @@ frame = framework.framework()
 frame.set_default_display_style(padding="0.25em",background_color="white", border_color="LightGrey", border_radius="0.5em")
 frame.set_default_io_style(padding="0.25em", margin="0.25em", border_color="LightGrey", border_radius="0.5em")
 
+group_style = {"border_style":"none", "border_radius":"0em"}
+button_style = {"font_size":"1.25em", "font_weight":"bold"}
+first_tab_style = {"border_radius":"0em 0.5em 0.5em 0.5em"}
 
 states_movie = ["movie", "movie_iso_abund", "movie_abu_chart"]
 states_nugrid = ["nugrid", "nugrid_w_data", "iso_abund", "abu_chart"]+states_movie
@@ -102,22 +105,22 @@ frame.set_state_children("kipp_settings", ["plot_star_mass", "plot_c12border", "
 
 frame.set_state_data("class_instance", None)
 
-frame.set_state_attribute('window', visible=True, border_style="", border_radius="0em")
+frame.set_state_attribute('window', visible=True, **group_style)
 frame.set_state_attribute('Title', visible=True, value = "<h1>NuGrid / Mesa Explorer</h1>")
-frame.set_state_attribute('widget', visible=True, border_style="", border_radius="0em")
+frame.set_state_attribute('widget', visible=True, **group_style)
 
-frame.set_state_attribute("page_data", visible=True)
+frame.set_state_attribute("page_data", visible=True, **first_tab_style)
 frame.set_state_attribute('mass', visible=True, description="Mass: ", options=["1.0", "1.65", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "12.0", "15.0", "20.0", "25.0", "32.0", "60.0"], selected_label="2.0")
 frame.set_state_attribute('Z', visible=True, description="Z: ",
                           options=["1E-4", "1E-3", "6E-3", "1E-2", "2E-2"])
 frame.set_state_attribute("select_nugrid_mesa", visible=True,
                           description="Select NuGrid or Mesa: ",
                           options=["", "NuGrid", "Mesa"])
-frame.set_state_attribute("contain_module_load", visible=True, border_style="", border_radius="0em")
+frame.set_state_attribute("contain_module_load", visible=True, **group_style)
 frame.set_state_attribute("select_module", visible=True,
                           description="Select data type: ", disabled=True)
 frame.set_state_attribute("load_data", visible=True,
-                          description="Load Data", disabled=True)
+                          description="Load Data", disabled=True, **button_style)
 frame.set_state_attribute("select_plot", visible=True,
                           description="Select plot type: ", disabled=True)
 
@@ -225,11 +228,11 @@ frame.set_object("select_plot", widgets.Dropdown())
 ###Plotting page###
 frame.set_state_attribute('page_plotting', visible=True)
 
-frame.set_state_attribute('warning_msg', visible=True, value="<h3>Error: No data loaded!</h3>")
+frame.set_state_attribute('warning_msg', visible=True, value="<h3>Error: No data loaded!</h3>", **group_style)
 frame.set_state_attribute("warning_msg", ["nugrid_w_data", "mesa_w_data"], value="<h3>Error: No plot selected!</h3>")
 frame.set_state_attribute("warning_msg", states_plotting, visible=False)
 
-frame.set_state_attribute("plot_name", border_style="", border_radius="0em")
+frame.set_state_attribute("plot_name", **group_style)
 frame.set_state_attribute('plot_name', "iso_abund", visible=True, value="<h2>Isotope abundance</h2>")
 frame.set_state_attribute('plot_name', "abu_chart", visible=True, value="<h2>Abundance chart</h2>")
 frame.set_state_attribute('plot_name', states_movie, visible=True, value="<h2>Movie</h2>")
@@ -240,16 +243,16 @@ frame.set_state_attribute('plot_name', "kip_cont", visible=True, value="<h2>Kipp
 
 frame.set_state_attribute('movie_type', states_movie, visible=True, description="Movie Type: ", options={"":"movie", "Isotope abundance":"movie_iso_abund", "Abundance chart":"movie_abu_chart"})
 frame.set_state_attribute('cycle', ["iso_abund", "abu_chart"], visible=True, description="cycle: ")
-frame.set_state_attribute('cycle_range', states_movie, visible=True)
+frame.set_state_attribute('cycle_range', states_movie[1:], visible=True)
 
-frame.set_state_attribute('xax', "plot", visible=True, border_style="", border_radius="0em")
+frame.set_state_attribute('xax', "plot", visible=True, **group_style)
 frame.set_state_attribute('xaxis', visible=True, description="select X-axis: ")
 frame.set_state_attribute('logx', visible=True, description="log X-axis: ")
-frame.set_state_attribute('yax', "plot", visible=True, border_style="", border_radius="0em")
+frame.set_state_attribute('yax', "plot", visible=True, **group_style)
 frame.set_state_attribute('yaxis', visible=True, description="select Y-axis: ")
 frame.set_state_attribute('logy', visible=True, description="log Y-axis: ")
 
-frame.set_state_attribute("mass_settings", ["iso_abund", "abu_chart"]+states_movie[1:], visible=True, border_style="", border_radius="0em")
+frame.set_state_attribute("mass_settings", ["iso_abund", "abu_chart"]+states_movie[1:], visible=True, **group_style)
 frame.set_state_attribute("set_amass", ["iso_abund", "movie_iso_abund"], visible=True, description="Set atomic mass: ")
 frame.set_state_attribute("amass_range", ["iso_abund", "movie_iso_abund"], description="Atomi mass range: ", min=0, max=211, value=(0, 211))
 frame.set_state_attribute("set_mass", ["iso_abund", "abu_chart"]+states_movie[1:], visible=True, description="Set mass: ")
@@ -260,7 +263,7 @@ frame.set_state_attribute("lbound", min=-12, max=0)#make sure the limits are set
 frame.set_state_links("amass_link", [("set_amass", "value"), ("amass_range", "visible")], ["iso_abund", "movie_iso_abund"], True)
 frame.set_state_links("mass_link", [("set_mass", "value"), ("mass_range", "visible")], ["iso_abund", "abu_chart"]+states_movie[1:], True)
 
-frame.set_state_attribute("lim_settings" , ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], visible=True, border_style="", border_radius="0em")
+frame.set_state_attribute("lim_settings" , ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], visible=True, **group_style)
 frame.set_state_attribute("set_lims", ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], visible=True, description="Set axis limits: ")
 frame.set_state_attribute("xlim", ["abu_chart", "movie_abu_chart", "kip_cont"], description="x-axis limits: ", min=0, max=130, value=(0, 130), step=0.5)
 frame.set_state_attribute("ylim", ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], description="y-axis limits: ")
@@ -272,12 +275,12 @@ frame.set_state_attribute("ylim", "kip_cont", min=0, max=1, value=(0, 1), step=0
 frame.set_state_links("xlims_link", [("set_lims", "value"), ("xlim", "visible")], ["abu_chart", "movie_abu_chart", "kip_cont"], True)
 frame.set_state_links("ylims_link", [("set_lims", "value"), ("ylim", "visible")], ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], True) 
 
-frame.set_state_attribute("abu_settings", ["abu_chart", "movie_abu_chart"], visible=True, border_style="", border_radius="0em")
+frame.set_state_attribute("abu_settings", ["abu_chart", "movie_abu_chart"], visible=True, **group_style)
 frame.set_state_attribute("ilabel", ["abu_chart", "movie_abu_chart"], visible=True, description="Element label")
 frame.set_state_attribute("imlabel", ["abu_chart", "movie_abu_chart"], visible=True, description="Isotope label")
 frame.set_state_attribute("imagic", ["abu_chart", "movie_abu_chart"], visible=True, description="Magic numbers")
 
-frame.set_state_attribute("kipp_settings", ["kippenhahn", "kip_cont"], visible=True, border_style="", border_radius="0em")
+frame.set_state_attribute("kipp_settings", ["kippenhahn", "kip_cont"], visible=True, **group_style)
 frame.set_state_attribute("plot_star_mass", "kippenhahn", visible=True, description="Plot star mass: ")
 frame.set_state_attribute("plot_c12border", ["kippenhahn", "kip_cont"], visible=True, description="Show C-12 Border: ")
 frame.set_state_attribute("plot_engminus", "kip_cont", visible=True, description="Energy generation contours (eps_nuc>0): ")
@@ -285,7 +288,7 @@ frame.set_state_attribute("plot_engplus", "kip_cont", visible=True, description=
 
 frame.set_state_attribute("stable", "iso_abund", visible=True, description="stable: ")
 
-frame.set_state_attribute('generate_plot', states_plotting, visible=True, description="Generate Plot", font_size="1.25em", font_weight="bold")
+frame.set_state_attribute('generate_plot', states_plotting, visible=True, description="Generate Plot", **button_style)
         
 def sel_movie_plot(widget, value):
     data = frame.get_state_data("class_instance")
