@@ -215,7 +215,7 @@ frame.set_object("Title", widgets.HTML())
 frame.set_object("widget", widgets.Tab())
 
 frame.set_object("page_data", widgets.VBox())
-frame.set_object("mass", widgets.Dropdown(options=["2.0"]))#The option 2.0 is defined since above the selected_label is defined as 2.0, and selected_label is set before options causing a key error
+frame.set_object("mass", widgets.Dropdown())
 frame.set_object("Z", widgets.ToggleButtons())
 
 frame.set_object("select_nugrid_mesa", widgets.Dropdown())
@@ -258,7 +258,6 @@ frame.set_state_attribute("amass_range", ["iso_abund", "movie_iso_abund"], descr
 frame.set_state_attribute("set_mass", ["iso_abund", "abu_chart"]+states_movie[1:], visible=True, description="Set mass: ")
 frame.set_state_attribute("mass_range", ["iso_abund", "abu_chart"]+states_movie[1:], description="Mass range: ")
 frame.set_state_attribute("lbound", "abu_chart", visible=True, description="lbound", min=-12, max=0, step=0.05, value=(-12, 0))
-frame.set_state_attribute("lbound", min=-12, max=0)#make sure the limits are set before the value
 
 frame.set_state_links("amass_link", [("set_amass", "value"), ("amass_range", "visible")], ["iso_abund", "movie_iso_abund"], True)
 frame.set_state_links("mass_link", [("set_mass", "value"), ("mass_range", "visible")], ["iso_abund", "abu_chart"]+states_movie[1:], True)
@@ -268,7 +267,6 @@ frame.set_state_attribute("set_lims", ["iso_abund", "abu_chart", "kip_cont"]+sta
 frame.set_state_attribute("xlim", ["abu_chart", "movie_abu_chart", "kip_cont"], description="x-axis limits: ", min=0, max=130, value=(0, 130), step=0.5)
 frame.set_state_attribute("ylim", ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], description="y-axis limits: ")
 frame.set_state_attribute("ylim", ["iso_abund", "movie_iso_abund"], min=-13, max=0, step=0.05, value=(-13, 0))
-frame.set_state_attribute("ylim", min=-13, max=0)#make sure the limits are set before the value
 frame.set_state_attribute("ylim", ["abu_chart", "movie_abu_chart"], min=0, max=130, value=(0, 130), step=0.5)
 frame.set_state_attribute("ylim", "kip_cont", min=0, max=1, value=(0, 1), step=0.005)
 

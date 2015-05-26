@@ -6,6 +6,9 @@ class framework():
     def __init__(self):
         self._state = ""
         
+        ##order of operations
+        self._order_of_operations = ["options", "max", "min", "value", "selected_index"]
+        
         #global defaults
         self._default_io_style = {}
         self._default_display_style = {}
@@ -349,7 +352,17 @@ class framework():
         
     def set_attributes(self, obj_name, **kwargs):
         if obj_name in self._object_list:
-            for attr in kwargs:
+            un_ordered_keys = kwargs.keys()
+            un_ordered_keys = list(set(un_ordered_keys) - set(self._order_of_operations))
+
+            for attr in self._order_of_operations: #apply attributes in a given order
+                if attr in kwargs:
+                    if hasattr(self._object_list[obj_name], attr):
+                        setattr(self._object_list[obj_name], attr, kwargs[attr])
+                    else:
+                        raise AttributeError(obj_name+" does not have attribute "+attr)
+            
+            for attr in un_ordered_keys: #apply all other attributes in an arbitrary order
                 if hasattr(self._object_list[obj_name], attr):
                     setattr(self._object_list[obj_name], attr, kwargs[attr])
                 else:
@@ -366,4 +379,3 @@ class framework():
                 raise AttributeError(obj_name+" does not have attribute "+attribute)
         else:
             raise ValueError("The object: "+obj_name+" is not defined!")
-    

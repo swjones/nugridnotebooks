@@ -4,8 +4,6 @@ import os
 #temp fix
 if os.path.isdir("/home/nugrid/omega_sygma"):
     os.environ["SYGMADIR"] = "/home/nugrid/omega_sygma"
-#if os.path.isdir("/rpod3/lsiemens/omega_sygma"):
-#    os.environ["SYGMADIR"] = "/rpod3/lsiemens/omega_sygma"
 
 import sygma as s
 
@@ -82,6 +80,7 @@ frame.add_display_object("plot_page")
 frame.add_display_object("warning_msg")
 frame.add_display_object("plot_name")
 frame.add_io_object("source")
+frame.add_io_object("over_plotting")
 
 frame.add_display_object("spieces_group")
 frame.add_io_object("iso_or_elem")
@@ -92,7 +91,7 @@ frame.add_io_object("elem_denom")
 frame.add_io_object("plot")
 
 frame.set_state_children("widget", ["plot_page"], titles=["Plotting"])
-frame.set_state_children("plot_page", ["warning_msg", "plot_type", "plot_name", "source", "spieces_group", "elem_numer", "elem_denom", "plot"])
+frame.set_state_children("plot_page", ["warning_msg", "plot_type", "plot_name", "source", "over_plotting", "spieces_group", "elem_numer", "elem_denom", "plot"])
 frame.set_state_children("spieces_group", ["iso_or_elem", "spieces"])
 
 
@@ -218,14 +217,14 @@ frame.set_object("widget", widgets.Tab())
 frame.set_object("sim_page", widgets.VBox())
 frame.set_object("mass_Z_group", widgets.HBox())
 frame.set_object("mass_gas", widgets.Text())
-frame.set_object("init_Z", widgets.Dropdown(options=["0.02"]))# option 0.02 is included since selection_label is set and will be called before options in set_state_attributes
+frame.set_object("init_Z", widgets.Dropdown())
 
 frame.set_object("time_group", widgets.HBox())
 frame.set_object("t_end", widgets.Text())
 frame.set_object("dt", widgets.Text())
 
 frame.set_object("imf_type_group", widgets.HBox())
-frame.set_object("imf_type", widgets.Dropdown(options=['salpeter']))
+frame.set_object("imf_type", widgets.Dropdown())
 frame.set_object("imf_alpha", widgets.FloatSlider())
 
 frame.set_object("imf_mass_group", widgets.HBox())
@@ -252,6 +251,7 @@ frame.set_state_attribute("plot_name", "plot_spectro", visible=True, value="<h2>
 frame.set_state_attribute("plot_name", "plot_mass_range", visible=True, value="<h2>Plot: Mass range contributions</h2><p>Only ejecta from AGB and massive stars are considered.</p>")
 
 frame.set_state_attribute("source", ["plot_totmasses", "plot_mass", "plot_spectro"], visible=True, description="Yield source: ", options=["All", "AGB", "SNe Ia", "Massive"], selected_label="All")
+frame.set_state_attribute("over_plotting", states, visible=False, description="Over plotting", **button_style)#visible == False
 frame.set_state_attribute("spieces_group", ["plot_mass", "plot_mass_range"], visible=True, **group_style)
 frame.set_state_attribute("iso_or_elem", visible=True, description="Spieces type: ", options=["Elements", "Isotopes"], selected_label="Elements")
 frame.set_state_attribute("spieces", visible=True, description="Element: ", options=elements_all, **text_box_style)
@@ -289,8 +289,10 @@ def sel_iso_or_elem(attribute, value):
         frame.set_attributes("spieces", description="Element: ", options=elements)
     
 def run(widget):
+    #if not frame.get_attribute("over_plotting", "value"):
     clear_output()
     pyplot.close("all")
+        
     source_map = {"All":"all", "AGB":"agb", "SNe Ia":"sn1a", "Massive":"massive"}
     state = frame.get_state()
     data = frame.get_state_data("sygma")
@@ -316,9 +318,10 @@ frame.set_state_callbacks("plot", run, attribute=None, type="on_click")
 frame.set_object("plot_page", widgets.VBox())
 frame.set_object("warning_msg", widgets.HTML())
 frame.set_object("plot_name", widgets.HTML())
-frame.set_object("source", widgets.Dropdown(options=["All"]))
+frame.set_object("source", widgets.Dropdown())
+frame.set_object("over_plotting", widgets.ToggleButton())
 frame.set_object("spieces_group", widgets.VBox())
-frame.set_object("iso_or_elem", widgets.RadioButtons(options=["Elements"]))
+frame.set_object("iso_or_elem", widgets.RadioButtons())
 frame.set_object("spieces", widgets.Select())
 frame.set_object("elem_numer", widgets.Select())
 frame.set_object("elem_denom", widgets.Select())
