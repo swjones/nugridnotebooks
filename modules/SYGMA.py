@@ -31,8 +31,26 @@ elements_all=['H','He','Li','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S'
 isotopes_sn1a=['C-12','C-13','N-14','N-15','O-16','O-17','O-18','F-19','Ne-20','Ne-21','Ne-22','Na-23','Mg-24','Mg-25','Mg-26','Al-27','Si-28','Si-29','Si-30','P-31','S-32','S-33','S-34','S-36','Cl-35','Cl-37','Ar-36','Ar-38','Ar-40','K-39','K-40','K-41','Ca-40','Ca-42','Ca-43','Ca-44','Ca-46','Ca-48','Sc-45','Ti-46','Ti-47','Ti-48','Ti-49','Ti-50','V-50','V-51','Cr-50','Cr-52','Cr-53','Cr-54','Mn-55','Fe-54','Fe-56','Fe-57','Fe-58','Co-59','Ni-58','Ni-60','Ni-61','Ni-62','Ni-64']
 elements_sn1a=['C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni']
 
+line_styles=["-", "--", ":", "-."]
+line_colors=["k", "r", "g", "b", "c", "m", "y"]
+line_markers = ["o", "s", "x", "D", "v", "^", "<", ">", "p", "*", "+"]
+
 frame.set_state_data("elements", elements_all)
 frame.set_state_data("isotopes", isotopes_all)
+frame.set_state_data("over_plotting_data", [])
+
+line_count = 0
+
+def get_line_style():
+    global line_count
+    
+    line_style = line_styles[line_count % len(line_styles)]
+    line_color = line_colors[line_count % len(line_colors)]
+    line_marker = line_markers[line_count % len(line_markers)]
+
+    line_count += 1
+    
+    return {"shape":line_style, "marker":line_marker, "color":line_color}
 
 frame.add_display_object("window")
 frame.add_io_object("title")
@@ -79,8 +97,11 @@ frame.add_display_object("plot_page")
 
 frame.add_display_object("warning_msg")
 frame.add_display_object("plot_name")
+
+frame.add_display_object("source_over_plotting_group")
 frame.add_io_object("source")
 frame.add_io_object("over_plotting")
+frame.add_io_object("clear_plot")
 
 frame.add_display_object("spieces_group")
 frame.add_io_object("iso_or_elem")
@@ -91,7 +112,8 @@ frame.add_io_object("elem_denom")
 frame.add_io_object("plot")
 
 frame.set_state_children("widget", ["plot_page"], titles=["Plotting"])
-frame.set_state_children("plot_page", ["warning_msg", "plot_type", "plot_name", "source", "over_plotting", "spieces_group", "elem_numer", "elem_denom", "plot"])
+frame.set_state_children("plot_page", ["warning_msg", "plot_type", "plot_name", "source_over_plotting_group", "spieces_group", "elem_numer", "elem_denom", "plot"])
+frame.set_state_children("source_over_plotting_group", ["source", "over_plotting", "clear_plot"])
 frame.set_state_children("spieces_group", ["iso_or_elem", "spieces"])
 
 
@@ -183,22 +205,6 @@ def run_simulation(widget):
     ##force reset plottype
     frame.set_attributes("plot_type", selected_label="Species mass", value="Species mass")
     frame.set_attributes("plot_type", selected_label="Total mass", value="Total mass")
-    
-def sel_plot_type(attribute, value):
-    if value=="Total mass":
-        frame.set_state("plot_totmasses")
-    elif value=="Species mass":
-        frame.set_state("plot_mass")
-    elif value=="Species spectroscopic":
-        frame.set_state("plot_spectro")
-    elif value=="Mass range contributions":
-        frame.set_state("plot_mass_range")
-    
-    iniZ = float(frame.get_attribute("init_Z", "value"))
-    if iniZ==0.0:
-        frame.set_attributes("source", options=["All", "AGB", "Massive"])
-    else:
-        frame.set_attributes("source", options=["All", "AGB", "SNe Ia", "Massive"])
 
 
 frame.set_state_callbacks("mass_gas", mass_gas_handler)        
@@ -208,7 +214,6 @@ frame.set_state_callbacks("imf_mass_min", imf_mass_min_handler)
 frame.set_state_callbacks("imf_mass_max", imf_mass_max_handler)        
 frame.set_state_callbacks("imf_type", sel_imf_type)
 frame.set_state_callbacks("run_sim", run_simulation, attribute=None, type="on_click")
-frame.set_state_callbacks("plot_type", sel_plot_type)
 
 frame.set_object("window", widgets.Box())
 frame.set_object("title", widgets.HTML())
@@ -250,14 +255,42 @@ frame.set_state_attribute("plot_name", "plot_mass", visible=True, value="<h2>Plo
 frame.set_state_attribute("plot_name", "plot_spectro", visible=True, value="<h2>Plot: Spectroscopic Mass evolution</h2>")
 frame.set_state_attribute("plot_name", "plot_mass_range", visible=True, value="<h2>Plot: Mass range contributions</h2><p>Only ejecta from AGB and massive stars are considered.</p>")
 
-frame.set_state_attribute("source", ["plot_totmasses", "plot_mass", "plot_spectro"], visible=True, description="Yield source: ", options=["All", "AGB", "SNe Ia", "Massive"], selected_label="All")
-frame.set_state_attribute("over_plotting", states, visible=False, description="Over plotting", **button_style)#visible == False
+frame.set_state_attribute("source_over_plotting_group", ["plot_totmasses", "plot_mass", "plot_spectro"], visible=True, **group_style)
+frame.set_state_attribute("source", visible=True, description="Yield source: ", options=["All", "AGB", "SNe Ia", "Massive"], selected_label="All")
+frame.set_state_attribute("over_plotting", visible=True, description="Over plotting", value=False, **button_style)
+frame.set_state_attribute("clear_plot", description="Clear plot", **button_style)
+frame.set_state_links("clear_plot_link", [("over_plotting", "value"), ("clear_plot", "visible")], directional=True)
+
 frame.set_state_attribute("spieces_group", ["plot_mass", "plot_mass_range"], visible=True, **group_style)
 frame.set_state_attribute("iso_or_elem", visible=True, description="Spieces type: ", options=["Elements", "Isotopes"], selected_label="Elements")
 frame.set_state_attribute("spieces", visible=True, description="Element: ", options=elements_all, **text_box_style)
 frame.set_state_attribute("elem_numer", "plot_spectro", visible=True, description="Y-axis [X/Y], choose X: ", options=elements_all, **text_box_style)
 frame.set_state_attribute("elem_denom", "plot_spectro", visible=True, description="Y-axis [X/Y], choose Y: ", options=elements_all, **text_box_style)
 frame.set_state_attribute("plot", states[1:], visible=True, description="Generate Plot", **button_style)
+
+def clear_plot_handler(widget):
+    global line_count
+    clear_output()
+    pyplot.close("all")
+    frame.set_state_data("over_plotting_data", [])
+
+def sel_plot_type(attribute, value):
+    global line_count
+    if value=="Total mass":
+        frame.set_state("plot_totmasses")
+    elif value=="Species mass":
+        frame.set_state("plot_mass")
+    elif value=="Species spectroscopic":
+        frame.set_state("plot_spectro")
+    elif value=="Mass range contributions":
+        frame.set_state("plot_mass_range")
+    
+    iniZ = float(frame.get_attribute("init_Z", "value"))
+    if iniZ==0.0:
+        frame.set_attributes("source", options=["All", "AGB", "Massive"])
+    else:
+        frame.set_attributes("source", options=["All", "AGB", "SNe Ia", "Massive"])
+    frame.set_state_data("over_plotting_data", [])
 
 def sel_source(attribute, value):
     if value=="SNe Ia":
@@ -289,28 +322,63 @@ def sel_iso_or_elem(attribute, value):
         frame.set_attributes("spieces", description="Element: ", options=elements)
     
 def run(widget):
-    #if not frame.get_attribute("over_plotting", "value"):
+    global line_count
+
+    line_count = 0
     clear_output()
     pyplot.close("all")
         
+    over_plotting = frame.get_attribute("over_plotting", "value")
     source_map = {"All":"all", "AGB":"agb", "SNe Ia":"sn1a", "Massive":"massive"}
+    label_map = {"All":"", "AGB":", AGB", "SNe Ia":", SNIa", "Massive":", Massive"}
     state = frame.get_state()
     data = frame.get_state_data("sygma")
     source = source_map[frame.get_attribute("source", "value")]
+    label_source = label_map[frame.get_attribute("source", "value")]
     spieces = frame.get_attribute("spieces", "value")
     
     if state=="plot_totmasses":
-        data.plot_totmasses(source=source)
+        if over_plotting:
+            plot_data = frame.get_state_data("over_plotting_data")
+            plot_data.append({"source":source})
+            frame.set_state_data("over_plotting_data", plot_data)
+            for item in plot_data:
+                data.plot_totmasses(**item)
+        else:
+            data.plot_totmasses(source=source)
     elif state=="plot_mass":
-        data.plot_mass(specie=spieces, source=source)
+        if over_plotting:
+            plot_data = frame.get_state_data("over_plotting_data")
+            plot_data.append({"specie":spieces, "source":source})
+            frame.set_state_data("over_plotting_data", plot_data)
+
+            for item in plot_data:
+                kwargs = item.copy()
+                kwargs.update(get_line_style())
+                data.plot_mass(**kwargs)
+        else:
+            data.plot_mass(specie=spieces, source=source)
     elif state=="plot_spectro":
         X = frame.get_attribute("elem_numer", "value")
         Y = frame.get_attribute("elem_denom", "value")
         yaxis = "["+X+"/"+Y+"]"
-        data.plot_spectro(yaxis=yaxis, source=source)
+        
+        if over_plotting:
+            label=yaxis + label_source
+            plot_data = frame.get_state_data("over_plotting_data")
+            plot_data.append({"yaxis":yaxis, "source":source, "label":label})
+            frame.set_state_data("over_plotting_data", plot_data)
+            for item in plot_data:
+                kwargs = item.copy()
+                kwargs.update(get_line_style())            
+                data.plot_spectro(**kwargs)
+        else:
+            data.plot_spectro(yaxis=yaxis, source=source)
     elif state=="plot_mass_range":
         data.plot_mass_range_contributions(specie=spieces)
 
+frame.set_state_callbacks("clear_plot", clear_plot_handler, attribute=None, type="on_click")
+frame.set_state_callbacks("plot_type", sel_plot_type)
 frame.set_state_callbacks("source", sel_source, state=["plot_spectro", "plot_mass"])
 frame.set_state_callbacks("iso_or_elem", sel_iso_or_elem)
 frame.set_state_callbacks("plot", run, attribute=None, type="on_click")
@@ -318,8 +386,10 @@ frame.set_state_callbacks("plot", run, attribute=None, type="on_click")
 frame.set_object("plot_page", widgets.VBox())
 frame.set_object("warning_msg", widgets.HTML())
 frame.set_object("plot_name", widgets.HTML())
+frame.set_object("source_over_plotting_group", widgets.HBox())
 frame.set_object("source", widgets.Dropdown())
 frame.set_object("over_plotting", widgets.ToggleButton())
+frame.set_object("clear_plot", widgets.Button())
 frame.set_object("spieces_group", widgets.VBox())
 frame.set_object("iso_or_elem", widgets.RadioButtons())
 frame.set_object("spieces", widgets.Select())
