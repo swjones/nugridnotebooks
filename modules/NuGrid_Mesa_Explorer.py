@@ -193,7 +193,7 @@ def sel_plot(widget, value):
         step = 1
         min = 0
         max = len(data.data)
-        mass = data.header_attr["inital_mass"]
+        mass = data.header_attr["initial_mass"]
         
         frame.set_state_attribute("xlim", "kip_cont", min=min, max=max, step=step, value=(min, max))    
         frame.set_state_attribute("ylim", "kip_cont", min=0.0, max=mass, step=step, value=(0.0, mass))
