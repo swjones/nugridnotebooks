@@ -5,7 +5,6 @@ from matplotlib import pyplot
 import nugridse as mp
 import mesa as ms
 
-
 frame = framework.framework()
 frame.set_default_display_style(padding="0.25em",background_color="white", border_color="LightGrey", border_radius="0.5em")
 frame.set_default_io_style(padding="0.25em", margin="0.25em", border_color="LightGrey", border_radius="0.5em")
@@ -194,8 +193,10 @@ def sel_plot(widget, value):
         step = 1
         min = 0
         max = len(data.data)
+        mass = data.header_attr["inital_mass"]
         
         frame.set_state_attribute("xlim", "kip_cont", min=min, max=max, step=step, value=(min, max))    
+        frame.set_state_attribute("ylim", "kip_cont", min=0.0, max=mass, step=step, value=(0.0, mass))
         
     frame.set_state(value)
 
@@ -268,7 +269,7 @@ frame.set_state_attribute("xlim", ["abu_chart", "movie_abu_chart", "kip_cont"], 
 frame.set_state_attribute("ylim", ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], description="y-axis limits: ")
 frame.set_state_attribute("ylim", ["iso_abund", "movie_iso_abund"], min=-13, max=0, step=0.05, value=(-13, 0))
 frame.set_state_attribute("ylim", ["abu_chart", "movie_abu_chart"], min=0, max=130, value=(0, 130), step=0.5)
-frame.set_state_attribute("ylim", "kip_cont", min=0, max=1, value=(0, 1), step=0.005)
+frame.set_state_attribute("ylim", "kip_cont", min=0, max=1, value=(0, 1), step=0.005)#mass
 
 frame.set_state_links("xlims_link", [("set_lims", "value"), ("xlim", "visible")], ["abu_chart", "movie_abu_chart", "kip_cont"], True)
 frame.set_state_links("ylims_link", [("set_lims", "value"), ("ylim", "visible")], ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], True) 
@@ -363,8 +364,8 @@ def make_plot(widget):
         data.kippenhahn(0, "model", plot_star_mass=plot_star_mass, c12_bm=plot_c12border)
     elif state=="kip_cont":
         xlims=[xlim[0], xlim[1]]
-        ylims=[ylim[0], ylim[1]]        
-        data.kip_cont(xlims=xlims, ylims=ylims, engenPlus=plot_engplus, engenMinus=plot_engminus, c12_boundary=plot_c12border)
+        ylims=[ylim[0], ylim[1]]
+        data.kip_cont(modstart=xlims[0], modstop=xlims[1], ylims=ylims, engenPlus=plot_engplus, engenMinus=plot_engminus, c12_boundary=plot_c12border)
     elif state=="movie_iso_abund":
         cycles = data.se.cycles
         cyc_min = cycles.index("%010d" % (cycle_range[0], ))
