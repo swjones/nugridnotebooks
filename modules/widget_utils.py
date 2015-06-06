@@ -4,6 +4,12 @@ def float_text(string):
             return string[:len(string)-i]
     return ""
 
+def int_text(string):
+    for i in xrange(len(string)):
+        if int_substring(string[:len(string)-i]):
+            return string[:len(string)-i]
+    return ""
+
 def float_substring(string):
     string=string.strip()
     if string == "":
@@ -13,6 +19,19 @@ def float_substring(string):
         if string[-1] in special_chars:
             string = string + "0"
         float(string)
+        return True
+    except ValueError:
+        return False
+
+def int_substring(string):
+    string=string.strip()
+    if string == "":
+        return True
+    special_chars = ["+", "-"]
+    try:
+        if string[-1] in special_chars:
+            string = string + "0"
+        int(string)
         return True
     except ValueError:
         return False
