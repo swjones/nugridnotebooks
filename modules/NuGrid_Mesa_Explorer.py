@@ -85,6 +85,8 @@ def start_explorer():
     frame.add_io_object("set_lims")
     frame.add_io_object("ylim")
     frame.add_io_object("xlim")
+    frame.add_io_object("yres")
+    frame.add_io_object("xres")
 
     frame.add_io_object("stable")
 
@@ -103,7 +105,7 @@ def start_explorer():
     frame.set_state_children("yax", ["yaxis", "logy"])
     frame.set_state_children("mass_settings", ["set_amass", "amass_range", "set_mass", "mass_range",
                                                "lbound"])
-    frame.set_state_children("lim_settings", ["set_lims", "xlim", "ylim"])
+    frame.set_state_children("lim_settings", ["set_lims", "xlim", "ylim", "xres", "yres"])
     frame.set_state_children("abu_settings", ["ilabel", "imlabel", "imagic"])
     frame.set_state_children("kipp_settings", ["plot_star_mass", "plot_c12border", "plot_engminus", "plot_engplus"])
 
@@ -297,6 +299,12 @@ def start_explorer():
     frame.set_state_links("xlims_link", [("set_lims", "value"), ("xlim", "visible")], ["abu_chart", "movie_abu_chart", "kip_cont"], True)
     frame.set_state_links("ylims_link", [("set_lims", "value"), ("ylim", "visible")], ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], True) 
 
+    frame.set_state_attribute("xres", "kip_cont", visible=True, description="x resolution: ", placeholder="1000", **text_box_style)
+    frame.set_state_attribute("yres", "kip_cont", visible=True, description="y resolution: ", placeholder="1000", **text_box_style)
+
+    frame.set_state_links("xres_link", [("set_lims", "value"), ("xres", "visible")], "kip_cont", True)
+    frame.set_state_links("yres_link", [("set_lims", "value"), ("yres", "visible")], "kip_cont", True) 
+
     frame.set_state_attribute("abu_settings", ["abu_chart", "movie_abu_chart"], visible=True, **group_style)
     frame.set_state_attribute("ilabel", ["abu_chart", "movie_abu_chart"], visible=True, description="Element label")
     frame.set_state_attribute("imlabel", ["abu_chart", "movie_abu_chart"], visible=True, description="Isotope label")
@@ -311,6 +319,12 @@ def start_explorer():
     frame.set_state_attribute("stable", "iso_abund", visible=True, description="stable: ")
 
     frame.set_state_attribute('generate_plot', states_plotting, visible=True, description="Generate Plot", **button_style)
+
+    def yres_handler(name, value):
+        frame.set_attributes("yres", value=int_text(value))
+
+    def xres_handler(name, value):
+        frame.set_attributes("xres", value=int_text(value))
 
     def sel_plot(widget, value):
         data = frame.get_state_data("class_instance")
@@ -390,6 +404,16 @@ def start_explorer():
         else:
             xlim = [0, 0]
             ylim = [0, 0]
+            
+        xres = frame.get_attribute("xres", "value")
+        if xres == "":
+            xres = frame.get_attribute("xres", "placeholder")
+        yres = frame.get_attribute("yres", "value")
+        if yres == "":
+            yres = frame.get_attribute("yres", "placeholder")
+        
+        xres = int(xres)
+        yres = int(yres)
         
         stable = frame.get_attribute("stable", "value")
         ilabel = frame.get_attribute("ilabel", "value")
@@ -415,7 +439,7 @@ def start_explorer():
         elif state=="kip_cont":
             xlims=[xlim[0], xlim[1]]
             ylims=[ylim[0], ylim[1]]
-            data.kip_cont(modstart=xlims[0], modstop=xlims[1], ylims=ylims, engenPlus=plot_engplus, engenMinus=plot_engminus, c12_boundary=plot_c12border)
+            data.kip_cont(modstart=xlims[0], modstop=xlims[1], ylims=ylims, xres=xres, yres=yres, engenPlus=plot_engplus, engenMinus=plot_engminus, c12_boundary=plot_c12border)
         elif state=="movie_iso_abund":
             cycles = data.se.cycles
             cyc_min = cycles.index("%010d" % (cycle_range[0], ))
@@ -430,6 +454,8 @@ def start_explorer():
             plotaxis = [xlim[0], xlim[1], ylim[0], ylim[1]]
             display(data.movie(cycles, "abu_chart", mass_range=mass, ilabel=ilabel, imlabel=imlabel, imagic=imagic, plotaxis=plotaxis))
 
+    frame.set_state_callbacks("yres", yres_handler)
+    frame.set_state_callbacks("xres", xres_handler)
     frame.set_state_callbacks("select_plot", sel_plot)
     frame.set_state_callbacks("movie_type", sel_movie_plot)
     frame.set_state_callbacks("generate_plot", make_plot, attribute=None, type="on_click")
@@ -459,6 +485,8 @@ def start_explorer():
     frame.set_object("set_lims", widgets.Checkbox())
     frame.set_object("ylim", widgets.FloatRangeSlider())
     frame.set_object("xlim", widgets.FloatRangeSlider())
+    frame.set_object("yres", widgets.Text())
+    frame.set_object("xres", widgets.Text())
 
     frame.set_object("stable", widgets.Checkbox())
 
