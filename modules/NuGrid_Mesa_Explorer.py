@@ -17,7 +17,7 @@ def start_explorer():
     first_tab_style = {"border_radius":"0em 0.5em 0.5em 0.5em"}
 
     states_movie = ["movie", "movie_iso_abund", "movie_abu_chart"]
-    states_nugrid = ["nugrid", "nugrid_w_data", "iso_abund", "abu_chart"]+states_movie
+    states_nugrid = ["nugrid", "nugrid_w_data", "iso_abund", "abu_chart", "nugrid_plot"]+states_movie
     states_mesa = ["mesa", "mesa_w_data", "hrd", "plot", "kip_cont", "kippenhahn"]
     states_plotting = states_nugrid[2:]+states_mesa[2:]
 
@@ -120,20 +120,15 @@ def start_explorer():
 
     frame.set_state_attribute("page_data", visible=True, **first_tab_style)
     frame.set_state_attribute('mass', visible=True, description="Mass: ", options=["1.0", "1.65", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "12.0", "15.0", "20.0", "25.0", "32.0", "60.0"], selected_label="2.0")
-    frame.set_state_attribute('Z', visible=True, description="Z: ",
-                              options=["1E-4", "1E-3", "6E-3", "1E-2", "2E-2"])
-    frame.set_state_attribute("select_nugrid_mesa", visible=True,
-                              description="Select NuGrid or Mesa: ",
-                              options=["", "NuGrid", "Mesa"])
+    frame.set_state_attribute('Z', visible=True, description="Z: ", options=["1E-4", "1E-3", "6E-3", "1E-2", "2E-2"])
+    frame.set_state_attribute("select_nugrid_mesa", visible=True, description="Select NuGrid or Mesa: ", options=["", "NuGrid", "Mesa"])
     frame.set_state_attribute("contain_module_load", visible=True, **group_style)
-    frame.set_state_attribute("select_module", visible=True,
-                              description="Select data type: ", disabled=True)
+    frame.set_state_attribute("select_module", visible=True, description="Select data type: ", disabled=True)
 
     frame.set_state_attribute("contain_model_select", border_style="none", padding="0px", margin="0px", width="18em")
     frame.set_state_attribute("model_select", visible=True, description="Select model: ", placeholder="1", **text_box_style)
 
-    frame.set_state_attribute("load_data", visible=True,
-                              description="Load Data", disabled=True, **button_style)
+    frame.set_state_attribute("load_data", visible=True, description="Load Data", disabled=True, **button_style)
 
     ###NUGRID###
     frame.set_state_attribute("select_module", states_nugrid, options=["", "H5 out"], disabled=False)
@@ -178,6 +173,9 @@ def start_explorer():
         if module == "H5 out":
             data = mp.se(mass=mass, Z=Z)
             frame.set_state("nugrid_w_data")
+            properties = ["mass", "radius", "rho", "temperature"]
+            frame.set_attributes("xaxis", options=properties)
+            frame.set_attributes("yaxis", options=properties+data.se.isotopes)
         elif module == "History":
             data = ms.history_data(mass=mass, Z=Z)
             frame.set_state("mesa_w_data")
@@ -249,9 +247,8 @@ def start_explorer():
     ###Plotting page###
     frame.set_state_attribute('page_plotting', visible=True)
 
-    frame.set_state_attribute("select_plot", visible=True,
-                              description="Select plot type: ", disabled=True)
-    frame.set_state_attribute("select_plot", states_nugrid[1:], options={"":"nugrid_w_data", "Isotope abundance":"iso_abund", "Abundance chart":"abu_chart", "Movie":"movie"}, disabled=False)
+    frame.set_state_attribute("select_plot", visible=True, description="Select plot type: ", disabled=True)
+    frame.set_state_attribute("select_plot", states_nugrid[1:], options={"":"nugrid_w_data", "Isotope abundance":"iso_abund", "Abundance chart":"abu_chart", "Movie":"movie", "Plot":"nugrid_plot"}, disabled=False)
     frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot", "Kippenhahn":"kippenhahn", "Kippenhahan contour":"kip_cont"}, disabled=False)
 
     frame.set_state_attribute('warning_msg', visible=True, value="<h3>Error: No data loaded!</h3>", **group_style)
@@ -263,18 +260,18 @@ def start_explorer():
     frame.set_state_attribute('plot_name', "abu_chart", visible=True, value="<h2>Abundance chart</h2>")
     frame.set_state_attribute('plot_name', states_movie, visible=True, value="<h2>Movie</h2>")
     frame.set_state_attribute('plot_name', "hrd", visible=True, value="<h2>HR-Diagram</h2>")
-    frame.set_state_attribute('plot_name', "plot", visible=True, value="<h2>Plot</h2>")
+    frame.set_state_attribute('plot_name', ["plot", "nugrid_plot"], visible=True, value="<h2>Plot</h2>")
     frame.set_state_attribute('plot_name', "kippenhahn", visible=True, value="<h2>Kippenhahn</h2>")
     frame.set_state_attribute('plot_name', "kip_cont", visible=True, value="<h2>Kippenhahn contour</h2>")
 
     frame.set_state_attribute('movie_type', states_movie, visible=True, description="Movie Type: ", options={"":"movie", "Isotope abundance":"movie_iso_abund", "Abundance chart":"movie_abu_chart"})
-    frame.set_state_attribute('cycle', ["iso_abund", "abu_chart"], visible=True, description="cycle: ")
+    frame.set_state_attribute('cycle', ["iso_abund", "abu_chart", "nugrid_plot"], visible=True, description="cycle: ")
     frame.set_state_attribute('cycle_range', states_movie[1:], visible=True)
 
-    frame.set_state_attribute('xax', "plot", visible=True, **group_style)
+    frame.set_state_attribute('xax', ["plot", "nugrid_plot"], visible=True, **group_style)
     frame.set_state_attribute('xaxis', visible=True, description="select X-axis: ")
     frame.set_state_attribute('logx', visible=True, description="log X-axis: ")
-    frame.set_state_attribute('yax', "plot", visible=True, **group_style)
+    frame.set_state_attribute('yax', ["plot", "nugrid_plot"], visible=True, **group_style)
     frame.set_state_attribute('yaxis', visible=True, description="select Y-axis: ")
     frame.set_state_attribute('logy', visible=True, description="log Y-axis: ")
 
@@ -338,8 +335,7 @@ def start_explorer():
             mass_list = data.se.get(min, "mass")
             mass_min, mass_max = mass_list[0], mass_list[-1]
             mass_step = (mass_max - mass_min)/200.0
-            frame.set_state_attribute("mass_range", ["iso_abund", "abu_chart"], min=mass_min, max=mass_max,
-                                      value=(mass_min, mass_max), step=mass_step)
+            frame.set_state_attribute("mass_range", ["iso_abund", "abu_chart"], min=mass_min, max=mass_max, value=(mass_min, mass_max), step=mass_step)
         
             frame.set_state_attribute('cycle', ["iso_abund", "abu_chart"], min=min, max=max, step=step)
     
@@ -350,6 +346,14 @@ def start_explorer():
         
             frame.set_state_attribute("xlim", "kip_cont", min=min, max=max, step=1, value=(min, max))    
             frame.set_state_attribute("ylim", "kip_cont", min=0.0, max=mass, step=mass/200.0, value=(0.0, mass))
+
+        if value in "nugrid_plot":
+            cycle_list = data.se.cycles
+            step = int(cycle_list[1])-int(cycle_list[0])
+            min = int(cycle_list[0])
+            max = int(cycle_list[-1])
+        
+            frame.set_state_attribute('cycle', "nugrid_plot", min=min, max=max, step=step)
         
         frame.set_state(value)
         
@@ -365,8 +369,7 @@ def start_explorer():
             mass_list = data.se.get(min, "mass")
             mass_min, mass_max = mass_list[0], mass_list[-1]
             mass_step = (mass_max - mass_min)/200.0
-            frame.set_state_attribute("mass_range", ["movie_iso_abund", "movie_abu_chart"], min=mass_min, max=mass_max,
-                                      value=(mass_min, mass_max), step=mass_step)
+            frame.set_state_attribute("mass_range", ["movie_iso_abund", "movie_abu_chart"], min=mass_min, max=mass_max, value=(mass_min, mass_max), step=mass_step)
         
             frame.set_state_attribute('cycle_range', ["movie_iso_abund", "movie_abu_chart"], min=min, max=max, step=step, value=(min, max))
         
@@ -407,10 +410,10 @@ def start_explorer():
             
         xres = frame.get_attribute("xres", "value")
         if xres == "":
-            xres = frame.get_attribute("xres", "placeholder")
+            xres = "1000"
         yres = frame.get_attribute("yres", "value")
         if yres == "":
-            yres = frame.get_attribute("yres", "placeholder")
+            yres = "1000"
         
         xres = int(xres)
         yres = int(yres)
@@ -431,7 +434,15 @@ def start_explorer():
             plotaxis = [xlim[0], xlim[1], ylim[0], ylim[1]]
             data.abu_chart(cycle, mass, ilabel, imlabel, imagic=imagic, lbound=lbound, plotaxis=plotaxis, ifig=1)
         elif state=="plot":
-            data.plot(xax, yax, logx=logx, logy=logy)
+            if isinstance(yax, basestring):
+                yax = [yax]
+            for yaxis in yax:
+                data.plot(xax, yaxis, logx=logx, logy=logy, shape="-")
+        elif state=="nugrid_plot":
+            if isinstance(yax, basestring):
+                yax = [yax]
+            for yaxis in yax:
+                data.plot(xax, yaxis, logx=logx, logy=logy, shape="-", fname=cycle, numtype="time")
         elif state=="hrd":
             data.hrd_new()
         elif state=="kippenhahn":
@@ -471,7 +482,7 @@ def start_explorer():
     frame.set_object("xaxis", widgets.Select())
     frame.set_object("logx", widgets.Checkbox())
     frame.set_object("yax", widgets.HBox())
-    frame.set_object("yaxis", widgets.Select())
+    frame.set_object("yaxis", widgets.SelectMultiple())
     frame.set_object("logy", widgets.Checkbox())
 
     frame.set_object("mass_settings", widgets.VBox())
