@@ -6,7 +6,7 @@ from matplotlib import pyplot
 import nugridse as mp
 import mesa as ms
 
-def start_explorer():
+def start_explorer(global_namespace):
     frame = framework.framework()
     frame.set_default_display_style(padding="0.25em",background_color="white", border_color="LightGrey", border_radius="0.5em")
     frame.set_default_io_style(padding="0.25em", margin="0.25em", border_color="LightGrey", border_radius="0.5em")
@@ -17,9 +17,9 @@ def start_explorer():
     first_tab_style = {"border_radius":"0em 0.5em 0.5em 0.5em"}
 
     states_movie = ["movie", "movie_iso_abund", "movie_abu_chart"]
-    states_nugrid = ["nugrid", "nugrid_w_data", "iso_abund", "abu_chart", "nugrid_plot"]+states_movie
-    states_mesa = ["mesa", "mesa_w_data", "hrd", "plot", "kip_cont", "kippenhahn"]
-    states_plotting = states_nugrid[2:]+states_mesa[2:]
+    states_nugrid = ["nugrid", "nugrid_w_data", "nugrid_get_data", "iso_abund", "abu_chart", "nugrid_plot"]+states_movie
+    states_mesa = ["mesa", "mesa_w_data", "get_data", "hrd", "plot", "kip_cont", "kippenhahn"]
+    states_plotting = states_nugrid[3:]+states_mesa[3:]
 
     frame.set_state_data("model_data", (None, None, None))
 
@@ -95,10 +95,12 @@ def start_explorer():
     frame.add_io_object("imlabel")
     frame.add_io_object("imagic")
 
+    frame.add_io_object("variable_name")
+
     frame.add_io_object("generate_plot")
 
     frame.set_state_children("widget", ["page_plotting"], titles=["Plotting"])
-    frame.set_state_children("page_plotting", ["select_plot", "warning_msg", "plot_name", "movie_type", "cycle", "cycle_range",
+    frame.set_state_children("page_plotting", ["select_plot", "warning_msg", "plot_name", "movie_type", "variable_name", "cycle", "cycle_range",
                                                "xax", "yax", "stable", "mass_settings", "kipp_settings", 
                                                "lim_settings", "abu_settings", "stable", "generate_plot"])
     frame.set_state_children("xax", ["xaxis", "logx"])
@@ -174,7 +176,7 @@ def start_explorer():
             data = mp.se(mass=mass, Z=Z)
             frame.set_state("nugrid_w_data")
             properties = ["mass", "radius", "rho", "temperature"]
-            frame.set_attributes("xaxis", options=properties)
+            frame.set_attributes("xaxis", options=properties+data.se.isotopes)
             frame.set_attributes("yaxis", options=properties+data.se.isotopes)
         elif module == "History":
             data = ms.history_data(mass=mass, Z=Z)
@@ -199,11 +201,11 @@ def start_explorer():
         
     def change_module(widget, value):
         if value == "History":
-            frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot", "Kippenhahn":"kippenhahn", "Kippenhahan contour":"kip_cont"})
+            frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot", "Kippenhahn":"kippenhahn", "Kippenhahan contour":"kip_cont", "Get data":"get_data"})
             frame.set_state_attribute("contain_model_select", states_mesa, visible=False)
             frame.set_attributes("contain_model_select", visible=False)
         elif value == "Profile":
-            frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "Plot":"plot"})
+            frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "Plot":"plot", "Get data":"get_data"})
 
             mass = float(frame.get_attribute("mass", "value"))
             Z = float(frame.get_attribute("Z", "value"))
@@ -248,12 +250,12 @@ def start_explorer():
     frame.set_state_attribute('page_plotting', visible=True)
 
     frame.set_state_attribute("select_plot", visible=True, description="Select plot type: ", disabled=True)
-    frame.set_state_attribute("select_plot", states_nugrid[1:], options={"":"nugrid_w_data", "Isotope abundance":"iso_abund", "Abundance chart":"abu_chart", "Movie":"movie", "Plot":"nugrid_plot"}, disabled=False)
-    frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot", "Kippenhahn":"kippenhahn", "Kippenhahan contour":"kip_cont"}, disabled=False)
+    frame.set_state_attribute("select_plot", states_nugrid[1:], options={"":"nugrid_w_data", "Isotope abundance":"iso_abund", "Abundance chart":"abu_chart", "Movie":"movie", "Plot":"nugrid_plot", "Get data":"nugrid_get_data"}, disabled=False)
+    frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot", "Kippenhahn":"kippenhahn", "Kippenhahan contour":"kip_cont", "Get data":"nugrid_get_data"}, disabled=False)
 
     frame.set_state_attribute('warning_msg', visible=True, value="<h3>Error: No data loaded!</h3>", **group_style)
-    frame.set_state_attribute("warning_msg", ["nugrid_w_data", "mesa_w_data"], value="<h3>Error: No plot selected!</h3>")
-    frame.set_state_attribute("warning_msg", states_plotting, visible=False)
+    frame.set_state_attribute("warning_msg", ["nugrid_w_data", "mesa_w_data"], value="<h2>Select plot.</h2>")
+    frame.set_state_attribute("warning_msg", states_plotting + ["get_data", "nugrid_get_data"], visible=False)
 
     frame.set_state_attribute("plot_name", **group_style)
     frame.set_state_attribute('plot_name', "iso_abund", visible=True, value="<h2>Isotope abundance</h2>")
@@ -263,14 +265,19 @@ def start_explorer():
     frame.set_state_attribute('plot_name', ["plot", "nugrid_plot"], visible=True, value="<h2>Plot</h2>")
     frame.set_state_attribute('plot_name', "kippenhahn", visible=True, value="<h2>Kippenhahn</h2>")
     frame.set_state_attribute('plot_name', "kip_cont", visible=True, value="<h2>Kippenhahn contour</h2>")
+    frame.set_state_attribute('plot_name', ["get_data", "nugrid_get_data"], visible=True, value="<h2>Get data</h2>")
+
+    frame.set_state_attribute("variable_name", ["get_data", "nugrid_get_data"], visible=True, description="Variable name: ", placeholder="Enter name.", **text_box_style)
 
     frame.set_state_attribute('movie_type', states_movie, visible=True, description="Movie Type: ", options={"":"movie", "Isotope abundance":"movie_iso_abund", "Abundance chart":"movie_abu_chart"})
-    frame.set_state_attribute('cycle', ["iso_abund", "abu_chart", "nugrid_plot"], visible=True, description="cycle: ")
+    frame.set_state_attribute('cycle', ["iso_abund", "abu_chart", "nugrid_plot", "nugrid_get_data"], visible=True, description="cycle: ")
     frame.set_state_attribute('cycle_range', states_movie[1:], visible=True)
 
-    frame.set_state_attribute('xax', ["plot", "nugrid_plot"], visible=True, **group_style)
+    frame.set_state_attribute('xax', ["plot", "nugrid_plot", "get_data", "nugrid_get_data"], visible=True, **group_style)
     frame.set_state_attribute('xaxis', visible=True, description="select X-axis: ")
+    frame.set_state_attribute('xaxis', ["get_data", "nugrid_get_data"], description="select data: ")
     frame.set_state_attribute('logx', visible=True, description="log X-axis: ")
+    frame.set_state_attribute('logx', ["get_data", "nugrid_get_data"], visible=False)
     frame.set_state_attribute('yax', ["plot", "nugrid_plot"], visible=True, **group_style)
     frame.set_state_attribute('yaxis', visible=True, description="select Y-axis: ")
     frame.set_state_attribute('logy', visible=True, description="log Y-axis: ")
@@ -316,13 +323,14 @@ def start_explorer():
     frame.set_state_attribute("stable", "iso_abund", visible=True, description="stable: ")
 
     frame.set_state_attribute('generate_plot', states_plotting, visible=True, description="Generate Plot", **button_style)
+    frame.set_state_attribute('generate_plot', ["get_data", "nugrid_get_data"], visible=True, description="Get Data", **button_style)
 
     def yres_handler(name, value):
         frame.set_attributes("yres", value=int_text(value))
 
     def xres_handler(name, value):
         frame.set_attributes("xres", value=int_text(value))
-
+        
     def sel_plot(widget, value):
         data = frame.get_state_data("class_instance")
     
@@ -347,13 +355,13 @@ def start_explorer():
             frame.set_state_attribute("xlim", "kip_cont", min=min, max=max, step=1, value=(min, max))    
             frame.set_state_attribute("ylim", "kip_cont", min=0.0, max=mass, step=mass/200.0, value=(0.0, mass))
 
-        if value in "nugrid_plot":
+        if value in ["nugrid_plot", "nugrid_get_data"]:
             cycle_list = data.se.cycles
             step = int(cycle_list[1])-int(cycle_list[0])
             min = int(cycle_list[0])
             max = int(cycle_list[-1])
         
-            frame.set_state_attribute('cycle', "nugrid_plot", min=min, max=max, step=step)
+            frame.set_state_attribute('cycle', ["nugrid_plot", "nugrid_get_data"], min=min, max=max, step=step)
         
         frame.set_state(value)
         
@@ -381,6 +389,7 @@ def start_explorer():
         state = frame.get_state()
     
         data = frame.get_state_data("class_instance")
+        variable_name = frame.get_attribute("variable_name", "value")
         cycle = frame.get_attribute("cycle", "value")
         cycle_range = frame.get_attribute("cycle_range", "value")
         xax = frame.get_attribute("xaxis", "value")
@@ -464,6 +473,10 @@ def start_explorer():
             cycles = cycles[cyc_min:cyc_max]
             plotaxis = [xlim[0], xlim[1], ylim[0], ylim[1]]
             display(data.movie(cycles, "abu_chart", mass_range=mass, ilabel=ilabel, imlabel=imlabel, imagic=imagic, plotaxis=plotaxis))
+        elif state=="get_data":
+            global_namespace[variable_name] = data.get(xax)
+        elif state=="nugrid_get_data":
+            global_namespace[variable_name] = data.se.get(cycle, xax)
 
     frame.set_state_callbacks("yres", yres_handler)
     frame.set_state_callbacks("xres", xres_handler)
@@ -476,6 +489,7 @@ def start_explorer():
     frame.set_object("warning_msg", widgets.HTML())
     frame.set_object("plot_name", widgets.HTML())
     frame.set_object("movie_type", widgets.Dropdown())
+    frame.set_object("variable_name", widgets.Text())
     frame.set_object("cycle", widgets.IntSlider())
     frame.set_object("cycle_range", widgets.IntRangeSlider())
     frame.set_object("xax", widgets.HBox())
