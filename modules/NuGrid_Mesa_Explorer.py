@@ -1,5 +1,6 @@
+import threading
 import widget_framework as framework
-from widget_utils import int_text
+from widget_utils import int_text, token_text
 from IPython.html import widgets
 from IPython.display import display, clear_output
 from matplotlib import pyplot
@@ -22,6 +23,7 @@ def start_explorer(global_namespace):
     states_plotting = states_nugrid[3:]+states_mesa[3:]
 
     frame.set_state_data("model_data", (None, None, None))
+    frame.set_state_data("variable_name_timer", None)
 
     frame.add_state(states_nugrid)
     frame.add_state(states_mesa)
@@ -205,6 +207,7 @@ def start_explorer(global_namespace):
             frame.set_state_attribute("contain_model_select", states_mesa, visible=False)
             frame.set_attributes("contain_model_select", visible=False)
         elif value == "Profile":
+            frame.set_attributes("load_data", disabled=True)
             frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "Plot":"plot", "Get data":"get_data"})
 
             mass = float(frame.get_attribute("mass", "value"))
@@ -219,6 +222,7 @@ def start_explorer(global_namespace):
             frame.set_state_attribute("contain_model_select", states_mesa, visible=True)
             frame.set_attributes("contain_model_select", visible=True)
             frame.set_attributes("model_select", value=str(mmodel[-1]))
+            frame.set_attributes("load_data", disabled=False)
         else:
             frame.set_state_attribute("contain_model_select", states_mesa, visible=False)
             frame.set_attributes("contain_model_select", visible=False)
@@ -324,6 +328,25 @@ def start_explorer(global_namespace):
 
     frame.set_state_attribute('generate_plot', states_plotting, visible=True, description="Generate Plot", **button_style)
     frame.set_state_attribute('generate_plot', ["get_data", "nugrid_get_data"], visible=True, description="Get Data", **button_style)
+
+    def variable_name_full_validation(value):
+        frame.set_attributes("variable_name", value=token_text(value, strict=True))
+        frame.set_state_data("variable_name_timer", None)
+        
+    def variable_name_handler(name, value):
+        value = token_text(value)
+        frame.set_attributes("variable_name", value=value)
+        
+        timer = frame.get_state_data("variable_name_timer")
+        if (value != token_text(value, strict=True)):
+            if timer != None:
+                timer.cancel()
+            timer = threading.Timer(1.0, variable_name_full_validation, kwargs={"value":value})
+            timer.start()
+        else:
+            timer.cancel()
+            timer = None
+        frame.set_state_data("variable_name_timer", timer)
 
     def yres_handler(name, value):
         frame.set_attributes("yres", value=int_text(value))
@@ -475,9 +498,16 @@ def start_explorer(global_namespace):
             display(data.movie(cycles, "abu_chart", mass_range=mass, ilabel=ilabel, imlabel=imlabel, imagic=imagic, plotaxis=plotaxis))
         elif state=="get_data":
             global_namespace[variable_name] = data.get(xax)
+            print("\nThe data " + str(xax) + " is loaded into the global namespace under the variable name \"" + str(variable_name) + "\".")
         elif state=="nugrid_get_data":
             global_namespace[variable_name] = data.se.get(cycle, xax)
+            print("\nThe data " + str(xax) + " is loaded into the global namespace under the variable name \"" + str(variable_name) + "\".")
 
+    def test(widget):
+        print("submit!")
+
+    frame.set_state_callbacks("variable_name", variable_name_handler)
+    frame.set_state_callbacks("variable_name", test, attribute=None, type="on_click")
     frame.set_state_callbacks("yres", yres_handler)
     frame.set_state_callbacks("xres", xres_handler)
     frame.set_state_callbacks("select_plot", sel_plot)
