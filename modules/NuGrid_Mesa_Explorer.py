@@ -204,7 +204,7 @@ def start_explorer(global_namespace):
         
     def change_module(widget, value):
         if value == "History":
-            frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot", "Kippenhahn":"kippenhahn", "Kippenhahan contour":"kip_cont", "Central temperature vs central density":"tcrhoc", "Get data":"get_data"})
+            frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot", "Kippenhahn":"kippenhahn", "Kippenhahan contour":"kip_cont", "TCRhoC plot":"tcrhoc", "Get data":"get_data"})
             frame.set_state_attribute("contain_model_select", states_mesa, visible=False)
             frame.set_attributes("contain_model_select", visible=False)
         elif value == "Profile":
@@ -256,7 +256,7 @@ def start_explorer(global_namespace):
 
     frame.set_state_attribute("select_plot", visible=True, description="Select plot type: ", disabled=True)
     frame.set_state_attribute("select_plot", states_nugrid[1:], options={"":"nugrid_w_data", "Isotope abundance":"iso_abund", "Abundance chart":"abu_chart", "Movie":"movie", "Plot":"nugrid_plot", "Get data":"nugrid_get_data"}, disabled=False)
-    frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot", "Kippenhahn":"kippenhahn", "Kippenhahan contour":"kip_cont", "Central temp vs central density":"tcrhoc", "Get data":"nugrid_get_data"}, disabled=False)
+    frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot", "Kippenhahn":"kippenhahn", "Kippenhahan contour":"kip_cont", "TCRhoC":"tcrhoc", "Get data":"nugrid_get_data"}, disabled=False)
 
     frame.set_state_attribute('warning_msg', visible=True, value="<h3>Error: No data loaded!</h3>", **group_style)
     frame.set_state_attribute("warning_msg", ["nugrid_w_data", "mesa_w_data"], value="<h2>Select plot.</h2>")

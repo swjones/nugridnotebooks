@@ -1,3 +1,9 @@
+""" 
+widget_utils.py
+
+This module provides extra functions to aid in the production of interactive interfaces using the widget_framework.py module.
+"""
+
 import re
 import keyword
 import __builtin__
