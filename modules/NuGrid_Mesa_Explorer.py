@@ -349,7 +349,8 @@ def start_explorer(global_namespace):
             timer = threading.Timer(1.0, variable_name_full_validation, kwargs={"value":value})
             timer.start()
         else:
-            timer.cancel()
+            if timer != None:
+                timer.cancel()
             timer = None
         frame.set_state_data("variable_name_timer", timer)
 
@@ -514,17 +515,19 @@ def start_explorer(global_namespace):
             plotaxis = [xlim[0], xlim[1], ylim[0], ylim[1]]
             display(data.movie(cycles, "abu_chart", mass_range=mass, ilabel=ilabel, imlabel=imlabel, imagic=imagic, plotaxis=plotaxis))
         elif state=="get_data":
-            global_namespace[variable_name] = data.get(xax)
-            print("\nThe data " + str(xax) + " is loaded into the global namespace under the variable name \"" + str(variable_name) + "\".")
+            if variable_name == "":
+                print("No variable name.")
+            else:
+                global_namespace[variable_name] = data.get(xax)
+                print("\nThe data " + str(xax) + " is loaded into the global namespace under the variable name \"" + str(variable_name) + "\".")
         elif state=="nugrid_get_data":
-            global_namespace[variable_name] = data.se.get(cycle, xax)
-            print("\nThe data " + str(xax) + " is loaded into the global namespace under the variable name \"" + str(variable_name) + "\".")
-
-    def test(widget):
-        print("submit!")
+            if variable_name == "":
+                print("No variable name.")
+            else:
+                global_namespace[variable_name] = data.se.get(cycle, xax)
+                print("\nThe data " + str(xax) + " is loaded into the global namespace under the variable name \"" + str(variable_name) + "\".")
 
     frame.set_state_callbacks("variable_name", variable_name_handler)
-    frame.set_state_callbacks("variable_name", test, attribute=None, type="on_click")
     frame.set_state_callbacks("yres", yres_handler)
     frame.set_state_callbacks("xres", xres_handler)
     frame.set_state_callbacks("select_plot", sel_plot)
