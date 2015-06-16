@@ -19,7 +19,7 @@ def start_explorer(global_namespace):
 
     states_movie = ["movie", "movie_iso_abund", "movie_abu_chart"]
     states_nugrid = ["nugrid", "nugrid_w_data", "nugrid_get_data", "iso_abund", "abu_chart", "nugrid_plot"]+states_movie
-    states_mesa = ["mesa", "mesa_w_data", "get_data", "hrd", "plot", "kip_cont", "kippenhahn"]
+    states_mesa = ["mesa", "mesa_w_data", "get_data", "hrd", "plot", "kip_cont", "kippenhahn", "tcrhoc"]
     states_plotting = states_nugrid[3:]+states_mesa[3:]
 
     frame.set_state_data("model_data", (None, None, None))
@@ -83,6 +83,7 @@ def start_explorer(global_namespace):
     frame.add_io_object("plot_engminus")
     frame.add_io_object("plot_engplus")
 
+    frame.add_io_object("ixaxis")
     frame.add_display_object("lim_settings")
     frame.add_io_object("set_lims")
     frame.add_io_object("ylim")
@@ -109,7 +110,7 @@ def start_explorer(global_namespace):
     frame.set_state_children("yax", ["yaxis", "logy"])
     frame.set_state_children("mass_settings", ["set_amass", "amass_range", "set_mass", "mass_range",
                                                "lbound"])
-    frame.set_state_children("lim_settings", ["set_lims", "xlim", "ylim", "xres", "yres"])
+    frame.set_state_children("lim_settings", ["ixaxis", "set_lims", "xlim", "ylim", "xres", "yres"])
     frame.set_state_children("abu_settings", ["ilabel", "imlabel", "imagic"])
     frame.set_state_children("kipp_settings", ["plot_star_mass", "plot_c12border", "plot_engminus", "plot_engplus"])
 
@@ -203,7 +204,7 @@ def start_explorer(global_namespace):
         
     def change_module(widget, value):
         if value == "History":
-            frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot", "Kippenhahn":"kippenhahn", "Kippenhahan contour":"kip_cont", "Get data":"get_data"})
+            frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot", "Kippenhahn":"kippenhahn", "Kippenhahan contour":"kip_cont", "Central temperature vs central density":"tcrhoc", "Get data":"get_data"})
             frame.set_state_attribute("contain_model_select", states_mesa, visible=False)
             frame.set_attributes("contain_model_select", visible=False)
         elif value == "Profile":
@@ -255,7 +256,7 @@ def start_explorer(global_namespace):
 
     frame.set_state_attribute("select_plot", visible=True, description="Select plot type: ", disabled=True)
     frame.set_state_attribute("select_plot", states_nugrid[1:], options={"":"nugrid_w_data", "Isotope abundance":"iso_abund", "Abundance chart":"abu_chart", "Movie":"movie", "Plot":"nugrid_plot", "Get data":"nugrid_get_data"}, disabled=False)
-    frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot", "Kippenhahn":"kippenhahn", "Kippenhahan contour":"kip_cont", "Get data":"nugrid_get_data"}, disabled=False)
+    frame.set_state_attribute("select_plot", states_mesa[1:], options={"":"mesa_w_data", "HR-Diagram":"hrd", "Plot":"plot", "Kippenhahn":"kippenhahn", "Kippenhahan contour":"kip_cont", "Central temp vs central density":"tcrhoc", "Get data":"nugrid_get_data"}, disabled=False)
 
     frame.set_state_attribute('warning_msg', visible=True, value="<h3>Error: No data loaded!</h3>", **group_style)
     frame.set_state_attribute("warning_msg", ["nugrid_w_data", "mesa_w_data"], value="<h2>Select plot.</h2>")
@@ -269,6 +270,7 @@ def start_explorer(global_namespace):
     frame.set_state_attribute('plot_name', ["plot", "nugrid_plot"], visible=True, value="<h2>Plot</h2>")
     frame.set_state_attribute('plot_name', "kippenhahn", visible=True, value="<h2>Kippenhahn</h2>")
     frame.set_state_attribute('plot_name', "kip_cont", visible=True, value="<h2>Kippenhahn contour</h2>")
+    frame.set_state_attribute('plot_name', "tcrhoc", visible=True, value="<h2>Central temperature vs central density</h2>")
     frame.set_state_attribute('plot_name', ["get_data", "nugrid_get_data"], visible=True, value="<h2>Get data</h2>")
 
     frame.set_state_attribute("variable_name", ["get_data", "nugrid_get_data"], visible=True, description="Variable name: ", placeholder="Enter name.", **text_box_style)
@@ -296,16 +298,19 @@ def start_explorer(global_namespace):
     frame.set_state_links("amass_link", [("set_amass", "value"), ("amass_range", "visible")], ["iso_abund", "movie_iso_abund"], True)
     frame.set_state_links("mass_link", [("set_mass", "value"), ("mass_range", "visible")], ["iso_abund", "abu_chart"]+states_movie[1:], True)
 
-    frame.set_state_attribute("lim_settings" , ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], visible=True, **group_style)
-    frame.set_state_attribute("set_lims", ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], visible=True, description="Set axis limits: ")
+    frame.set_state_attribute("lim_settings" , ["iso_abund", "abu_chart", "kip_cont", "tcrhoc"]+states_movie[1:], visible=True, **group_style)
+    frame.set_state_attribute("set_lims", ["iso_abund", "abu_chart", "kip_cont", "tcrhoc"]+states_movie[1:], visible=True, description="Set axis limits: ")
     frame.set_state_attribute("xlim", ["abu_chart", "movie_abu_chart", "kip_cont"], description="x-axis limits: ", min=0, max=130, value=(0, 130), step=0.5)
-    frame.set_state_attribute("ylim", ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], description="y-axis limits: ")
+    frame.set_state_attribute("xlim", "tcrhoc", description="x-axis limits: ", min=3.0, max=10.0, value=(3.0, 10.0), step=0.5)
+    frame.set_state_attribute("ylim", ["iso_abund", "abu_chart", "kip_cont", "tcrhoc"]+states_movie[1:], description="y-axis limits: ")
     frame.set_state_attribute("ylim", ["iso_abund", "movie_iso_abund"], min=-13, max=0, step=0.05, value=(-13, 0))
     frame.set_state_attribute("ylim", ["abu_chart", "movie_abu_chart"], min=0, max=130, value=(0, 130), step=0.5)
     frame.set_state_attribute("ylim", "kip_cont", min=0, max=1, value=(0, 1), step=0.005)#mass
+    frame.set_state_attribute("ylim", "tcrhoc", min=8.0, max=10.0, value=(8.0, 10.0), step=0.5)
+    frame.set_state_attribute("ixaxis", "kip_cont", visible=True, description="X axis format: ", options={"Log time":"log_time_left", "Age":"age", "Model number":"model_number"}, value="model_number")
 
-    frame.set_state_links("xlims_link", [("set_lims", "value"), ("xlim", "visible")], ["abu_chart", "movie_abu_chart", "kip_cont"], True)
-    frame.set_state_links("ylims_link", [("set_lims", "value"), ("ylim", "visible")], ["iso_abund", "abu_chart", "kip_cont"]+states_movie[1:], True) 
+    frame.set_state_links("xlims_link", [("set_lims", "value"), ("xlim", "visible")], ["abu_chart", "movie_abu_chart", "kip_cont", "tcrhoc"], True)
+    frame.set_state_links("ylims_link", [("set_lims", "value"), ("ylim", "visible")], ["iso_abund", "abu_chart", "kip_cont", "tcrhoc"]+states_movie[1:], True)
 
     frame.set_state_attribute("xres", "kip_cont", visible=True, description="x resolution: ", placeholder="1000", **text_box_style)
     frame.set_state_attribute("yres", "kip_cont", visible=True, description="y resolution: ", placeholder="1000", **text_box_style)
@@ -450,6 +455,8 @@ def start_explorer(global_namespace):
         xres = int(xres)
         yres = int(yres)
         
+        ixaxis = frame.get_attribute("ixaxis", "value") 
+        
         stable = frame.get_attribute("stable", "value")
         ilabel = frame.get_attribute("ilabel", "value")
         imlabel = frame.get_attribute("imlabel", "value")
@@ -482,7 +489,17 @@ def start_explorer(global_namespace):
         elif state=="kip_cont":
             xlims=[xlim[0], xlim[1]]
             ylims=[ylim[0], ylim[1]]
-            data.kip_cont(modstart=xlims[0], modstop=xlims[1], ylims=ylims, xres=xres, yres=yres, engenPlus=plot_engplus, engenMinus=plot_engminus, c12_boundary=plot_c12border)
+            if (xlims == [0,0]) and (ylims == [0,0]):
+                xlim = frame.get_attribute("xlim", "value")
+                ylim = frame.get_attribute("ylim", "value")
+                xlims=[xlim[0], xlim[1]]
+                ylims=[ylim[0], ylim[1]]
+            data.kip_cont(modstart=xlims[0], modstop=xlims[1], ylims=ylims, xres=xres, yres=yres, engenPlus=plot_engplus, engenMinus=plot_engminus, c12_boundary=plot_c12border, ixaxis = ixaxis)
+        elif state=="tcrhoc":
+            lims=[xlim[0], xlim[1], ylim[0], ylim[1]]
+            if lims == [0, 0, 0, 0]:
+                lims = [3.0, 10.0, 8.0, 10.0]
+            data.tcrhoc(lims=lims)
         elif state=="movie_iso_abund":
             cycles = data.se.cycles
             cyc_min = cycles.index("%010d" % (cycle_range[0], ))
@@ -538,6 +555,7 @@ def start_explorer(global_namespace):
 
     frame.set_object("lim_settings", widgets.VBox())
     frame.set_object("set_lims", widgets.Checkbox())
+    frame.set_object("ixaxis", widgets.Dropdown())
     frame.set_object("ylim", widgets.FloatRangeSlider())
     frame.set_object("xlim", widgets.FloatRangeSlider())
     frame.set_object("yres", widgets.Text())

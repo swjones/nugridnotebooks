@@ -7,7 +7,7 @@ class framework():
         self._state = ""
         
         ##order of operations
-        self._order_of_operations = ["options", "max", "min", "value", "selected_index"]
+        self._order_of_operations = ["options", "max", "min", "max", "value", "selected_index"]
         
         #global defaults
         self._default_io_style = {}
@@ -358,7 +358,11 @@ class framework():
             for attr in self._order_of_operations: #apply attributes in a given order
                 if attr in kwargs:
                     if hasattr(self._object_list[obj_name], attr):
-                        setattr(self._object_list[obj_name], attr, kwargs[attr])
+                        try:
+                            setattr(self._object_list[obj_name], attr, kwargs[attr])
+                        except ValueError:
+                            if not (attr in ["min", "max"]):
+                                raise
                     else:
                         raise AttributeError(obj_name+" does not have attribute "+attr)
             
