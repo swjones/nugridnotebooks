@@ -8,7 +8,7 @@ if os.path.isdir("/home/nugrid/omega_sygma"):
 import sygma as s
 
 import widget_framework as framework
-from widget_utils import float_text
+from widget_utils import float_text, auto_styles
 from IPython.html import widgets
 from IPython.display import display, clear_output
 from matplotlib import pyplot
@@ -35,22 +35,16 @@ line_styles=["-", "--", ":", "-."]
 line_colors=["k", "r", "g", "b", "c", "m", "y"]
 line_markers = ["o", "s", "x", "D", "v", "^", "<", ">", "p", "*", "+"]
 
+styles = auto_styles()
+styles.set_line_styles(line_styles)
+styles.set_line_colors(line_colors)
+styles.set_line_markers(line_markers)
+
 frame.set_state_data("elements", elements_all)
 frame.set_state_data("isotopes", isotopes_all)
 frame.set_state_data("over_plotting_data", [])
 
-line_count = 0
-
-def get_line_style():
-    global line_count
-    
-    line_style = line_styles[line_count % len(line_styles)]
-    line_color = line_colors[line_count % len(line_colors)]
-    line_marker = line_markers[line_count % len(line_markers)]
-
-    line_count += 1
-    
-    return {"shape":line_style, "marker":line_marker, "color":line_color}
+frame.set_state_data("styles", styles)
 
 frame.add_display_object("window")
 frame.add_io_object("title")
@@ -269,13 +263,11 @@ frame.set_state_attribute("elem_denom", "plot_spectro", visible=True, descriptio
 frame.set_state_attribute("plot", states[1:], visible=True, description="Generate Plot", **button_style)
 
 def clear_plot_handler(widget):
-    global line_count
     clear_output()
     pyplot.close("all")
     frame.set_state_data("over_plotting_data", [])
 
 def sel_plot_type(attribute, value):
-    global line_count
     if value=="Total mass":
         frame.set_state("plot_totmasses")
     elif value=="Species mass":
@@ -322,9 +314,9 @@ def sel_iso_or_elem(attribute, value):
         frame.set_attributes("spieces", description="Element: ", options=elements)
     
 def run(widget):
-    global line_count
+    styles = frame.get_state_data("styles")
+    styles.reset_line_count()
 
-    line_count = 0
     clear_output()
     pyplot.close("all")
         
@@ -354,7 +346,7 @@ def run(widget):
 
             for item in plot_data:
                 kwargs = item.copy()
-                kwargs.update(get_line_style())
+                kwargs.update(styles.get_style())
                 data.plot_mass(**kwargs)
         else:
             data.plot_mass(specie=spieces, source=source)
@@ -370,7 +362,7 @@ def run(widget):
             frame.set_state_data("over_plotting_data", plot_data)
             for item in plot_data:
                 kwargs = item.copy()
-                kwargs.update(get_line_style())            
+                kwargs.update(styles.get_style())
                 data.plot_spectro(**kwargs)
         else:
             data.plot_spectro(yaxis=yaxis, source=source)

@@ -8,7 +8,7 @@ if os.path.isdir("/home/nugrid/omega_sygma"):
 import omega
 
 import widget_framework as framework
-from widget_utils import float_text
+from widget_utils import float_text, auto_styles
 from IPython.html import widgets
 from IPython.display import display, clear_output
 from matplotlib import pyplot, colors
@@ -24,6 +24,11 @@ elements_alpha = ['O', 'Mg', 'Si', 'S', 'Ca']
 
 line_styles=['-', '--', '-.', ':']
 line_colors=['b', 'g', 'r', 'c', 'm', 'y', 'k']
+
+styles = auto_styles()
+styles.set_line_styles(line_styles)
+styles.set_line_colors(line_colors)
+styles.set_line_markers([])
 
 color_convert = colors.ColorConverter()
 
@@ -42,20 +47,20 @@ frame.add_state(states)
 
 frame.set_state_data("runs",[],"sculpt")
 frame.set_state_data("runs",[],"alpha")
-
-run_count = 0
-widget_count = 0
+frame.set_state_data("styles", styles)
+frame.set_state_data("run_count", 0)
 
 def add_run(state, data, name):
-    global widget_count
-    widget_count += 1
+    run_count = frame.get_state_data("run_count")
     state_data = frame.get_state_data("runs",state)
+    styles = frame.get_state_data("styles")
+    style = styles.get_style()
+    line_color = style["color"]
+    line_style = style["shape"]
     
-    widget_name = "runs_widget_#"+str(widget_count)
-    line_style = line_styles[widget_count % len(line_styles)]
-    line_color = line_colors[widget_count % len(line_colors)]
+    widget_name = "runs_widget_#"+str(run_count)
     
-    frame.add_io_object(widget_name)    
+    frame.add_io_object(widget_name)
     frame.set_state_attribute(widget_name, state, visible=True, description=name)
     frame.set_object(widget_name, widgets.Checkbox())
     
@@ -162,7 +167,7 @@ def sn1a_pmil_handler(name, value):
     frame.set_attributes("sn1a_pmil", value=float_text(value))
 
 def simulation_run(widget):
-    global run_count
+    run_count = frame.get_state_data("run_count")
     run_count += 1
     state = frame.get_state()
     data = None
@@ -184,6 +189,7 @@ def simulation_run(widget):
     add_run(state, data, name)
     frame.update()
     frame.set_attributes("run_name", value="")
+    frame.set_state_data("run_count", run_count)
     
 def remove_simulation(widget):
     state = frame.get_state()
