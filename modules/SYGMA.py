@@ -44,7 +44,8 @@ def start_SYGMA():
     frame.set_state_data("elements", elements_all)
     frame.set_state_data("isotopes", isotopes_all)
     frame.set_state_data("over_plotting_data", [])    
-    frame.set_state_data("styles", styles)
+    frame.set_state_data("styles", styles)    
+    frame.set_state_data("sygma", None) ##depricated
     
     frame.set_state_data("runs", [])
     frame.set_state_data("run_count", 0)
@@ -156,8 +157,6 @@ def start_SYGMA():
     frame.set_state_children("spieces_group", ["iso_or_elem", "spieces"])
     
     
-    frame.set_state_data("sygma", None)
-    
     frame.set_state_attribute('window', visible=True, **group_style)
     frame.set_state_attribute('title', visible=True, value="<h1>SYGMA</h1>")
     frame.set_state_attribute("widget_runs_group", visible=True) ##ADD_STYLE
@@ -239,21 +238,30 @@ def start_SYGMA():
         sn1a_rate = sn1a_map[frame.get_attribute("sn1a_rates", "value")]
         dt = float(frame.get_attribute("dt", "value"))
         tend = float(frame.get_attribute("t_end", "value"))
+        
+        run_count = frame.get_state_data("run_count")
+        name = frame.get_attribute("run_name", "value")
+        if name == "":
+            name = "Run: "+"%03d" % (run_count, )
+        
         if iniZ==0.0:
             data=s.sygma(mgal=mgal, iniZ=iniZ, imf_type=imf_type, alphaimf=alphaimf, imf_bdys=[10.1, 100.0], imf_bdys_pop3=imf_bdys, sn1a_on=sn1a_on,
                          sn1a_rate=sn1a_rate, dt=dt,tend=tend)
         else:
             data=s.sygma(mgal=mgal, iniZ=iniZ, imf_type=imf_type, alphaimf=alphaimf, imf_bdys=imf_bdys, sn1a_on=sn1a_on,
                          sn1a_rate=sn1a_rate, dt=dt,tend=tend)
-        frame.set_state_data("sygma", data)
+        frame.set_state_data("sygma", data) ## depricated
         frame.set_state("run_sim")
         ##force reset plottype
         frame.set_attributes("plot_type", selected_label="Species mass", value="Species mass")
         frame.set_attributes("plot_type", selected_label="Total mass", value="Total mass")
         
-        add_run(data, "place_holder", iniZ)
+        add_run(data, name, iniZ)
         frame.update()
-    
+
+    def remove_simulation(widget):
+        remove_runs()
+        frame.update()    
     
     frame.set_state_callbacks("mass_gas", mass_gas_handler)        
     frame.set_state_callbacks("t_end", t_end_handler)        
@@ -262,6 +270,7 @@ def start_SYGMA():
     frame.set_state_callbacks("imf_mass_max", imf_mass_max_handler)        
     frame.set_state_callbacks("imf_type", sel_imf_type)
     frame.set_state_callbacks("run_sim", run_simulation, attribute=None, type="on_click")
+    frame.set_state_callbacks("remove_run", remove_simulation, attribute=None, type="on_click")
     
     frame.set_object("window", widgets.Box())
     frame.set_object("title", widgets.HTML())
@@ -339,11 +348,11 @@ def start_SYGMA():
         elif value=="Mass range contributions":
             frame.set_state("plot_mass_range")
         
-        iniZ = float(frame.get_attribute("init_Z", "value"))
-        if iniZ==0.0:
-            frame.set_attributes("source", options=["All", "AGB", "Massive"])
-        else:
-            frame.set_attributes("source", options=["All", "AGB", "SNe Ia", "Massive"])
+#        iniZ = float(frame.get_attribute("init_Z", "value"))
+#        if iniZ==0.0:
+#            frame.set_attributes("source", options=["All", "AGB", "Massive"])
+#        else:
+        frame.set_attributes("source", options=["All", "AGB", "SNe Ia", "Massive"])
         frame.set_state_data("over_plotting_data", [])
     
     def sel_source(attribute, value):
@@ -386,62 +395,70 @@ def start_SYGMA():
         source_map = {"All":"all", "AGB":"agb", "SNe Ia":"sn1a", "Massive":"massive"}
         label_map = {"All":"", "AGB":", AGB", "SNe Ia":", SNIa", "Massive":", Massive"}
         state = frame.get_state()
-        data = frame.get_state_data("sygma")
+        runs = frame.get_state_data("runs")
         source = source_map[frame.get_attribute("source", "value")]
         label_source = label_map[frame.get_attribute("source", "value")]
         spieces = frame.get_attribute("spieces", "value")
         
         if state=="plot_totmasses":
-            if over_plotting:
-                plot_data = frame.get_state_data("over_plotting_data")
-                plot_data.append({"source":source})
-                frame.set_state_data("over_plotting_data", plot_data)
-                for item in plot_data:
-                    data.plot_totmasses(**item)
-            else:
-                data.plot_totmasses(source=source)
+            for data, name, Z, widget_name in runs:
+                if frame.get_attribute(widget_name, "value"):
+                    if over_plotting:
+                        plot_data = frame.get_state_data("over_plotting_data")
+                        plot_data.append({"source":source})
+                        frame.set_state_data("over_plotting_data", plot_data)
+                        for item in plot_data:
+                            data.plot_totmasses(**item)
+                    else:
+                        data.plot_totmasses(source=source, label="")
         elif state=="plot_mass":
-            if over_plotting:
-                plot_data = frame.get_state_data("over_plotting_data")
-                plot_data.append({"specie":spieces, "source":source})
-                frame.set_state_data("over_plotting_data", plot_data)
-    
-                for item in plot_data:
-                    kwargs = item.copy()
-                    kwargs.update(styles.get_style())
-                    data.plot_mass(**kwargs)
-            else:
-                data.plot_mass(specie=spieces, source=source)
+            for data, name, Z, widget_name in runs:
+                if frame.get_attribute(widget_name, "value"):
+                    if over_plotting:
+                        plot_data = frame.get_state_data("over_plotting_data")
+                        plot_data.append({"specie":spieces, "source":source})
+                        frame.set_state_data("over_plotting_data", plot_data)
+        
+                        for item in plot_data:
+                            kwargs = item.copy()
+                            kwargs.update(styles.get_style())
+                            data.plot_mass(**kwargs)
+                    else:
+                        data.plot_mass(specie=spieces, source=source, label="")
         elif state=="plot_spectro":
             X = frame.get_attribute("elem_numer", "value")
             Y = frame.get_attribute("elem_denom", "value")
             yaxis = "["+X+"/"+Y+"]"
             
-            if over_plotting:
-                label=yaxis + label_source
-                plot_data = frame.get_state_data("over_plotting_data")
-                plot_data.append({"yaxis":yaxis, "source":source, "label":label})
-                frame.set_state_data("over_plotting_data", plot_data)
-                for item in plot_data:
-                    kwargs = item.copy()
-                    kwargs.update(styles.get_style())
-                    data.plot_spectro(**kwargs)
-            else:
-                data.plot_spectro(yaxis=yaxis, source=source)
+            for data, name, Z, widget_name in runs:
+                if frame.get_attribute(widget_name, "value"):
+                    if over_plotting:
+                        label=yaxis + label_source
+                        plot_data = frame.get_state_data("over_plotting_data")
+                        plot_data.append({"yaxis":yaxis, "source":source, "label":label})
+                        frame.set_state_data("over_plotting_data", plot_data)
+                        for item in plot_data:
+                            kwargs = item.copy()
+                            kwargs.update(styles.get_style())
+                            data.plot_spectro(**kwargs)
+                    else:
+                        data.plot_spectro(yaxis=yaxis, source=source, label="")
         elif state=="plot_mass_range":
-            if over_plotting:
-                plot_data = frame.get_state_data("over_plotting_data")
-                plot_data.append({"specie":spieces})
-                frame.set_state_data("over_plotting_data", plot_data)
-    
-                for item in plot_data:
-                    kwargs = item.copy()
-                    color = styles.get_style()["color"]
-                    
-                    kwargs["color"] = color
-                    data.plot_mass_range_contributions(**kwargs)
-            else:
-                data.plot_mass_range_contributions(specie=spieces)
+            for data, name, Z, widget_name in runs:
+                if frame.get_attribute(widget_name, "value"):
+                    if over_plotting:
+                        plot_data = frame.get_state_data("over_plotting_data")
+                        plot_data.append({"specie":spieces})
+                        frame.set_state_data("over_plotting_data", plot_data)
+        
+                        for item in plot_data:
+                            kwargs = item.copy()
+                            color = styles.get_style()["color"]
+                        
+                            kwargs["color"] = color
+                            data.plot_mass_range_contributions(**kwargs)
+                    else:
+                        data.plot_mass_range_contributions(specie=spieces, label="")
 
     
     frame.set_state_callbacks("clear_plot", clear_plot_handler, attribute=None, type="on_click")
