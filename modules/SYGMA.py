@@ -46,9 +46,45 @@ def start_SYGMA():
     frame.set_state_data("over_plotting_data", [])    
     frame.set_state_data("styles", styles)
     
+    frame.set_state_data("runs", [])
+    frame.set_state_data("run_count", 0)
+    
+    def add_run(data, name, Z):
+        run_count = frame.get_state_data("run_count")
+        run_count += 1
+        runs_data = frame.get_state_data("runs")
+        widget_name = "runs_widget_#"+str(run_count)
+        
+        frame.add_io_object(widget_name)
+        frame.set_state_attribute(widget_name, visible=True, description=name)
+        frame.set_object(widget_name, widgets.Checkbox())
+        
+        runs_data.append((data, name, Z, widget_name))
+        frame.set_state_children("runs", [widget_name])
+        frame.set_state_data("runs", runs_data)
+        frame.set_state_data("run_count", run_count)
+    
+    def remove_runs():
+        data = frame.get_state_data("runs")
+        children = ["runs_title"]
+        tmp_data = []
+        for i in xrange(len(data)):
+            widget_name = data[i][3]
+            if frame.get_attribute(widget_name, "value"):
+                frame.remove_object(widget_name)
+            else:
+                children.append(widget_name)
+                tmp_data.append(data[i])
+        data = tmp_data
+        frame.set_state_children("runs", children, append=False)
+        frame.set_state_data("runs", data)
+    
     frame.add_display_object("window")
     frame.add_io_object("title")
+    frame.add_display_object("widget_runs_group")
     frame.add_display_object("widget")
+    frame.add_display_object("runs")
+    frame.add_display_object("runs_title")
     
     ###Sim page###
     frame.add_display_object("sim_page")
@@ -72,19 +108,28 @@ def start_SYGMA():
     frame.add_display_object("sn1a_group")
     frame.add_io_object("use_sn1a")
     frame.add_io_object("sn1a_rates")
+
+    frame.add_display_object("run_sim_remove_run_group")
     frame.add_io_object("run_sim")
+    frame.add_io_object("remove_run")
+    frame.add_io_object("run_name")
     
     frame.add_io_object("plot_type")
     frame.add_io_object("sim_responce")
     
-    frame.set_state_children("window", ["title", "widget"])
+    frame.set_state_children("window", ["title", "widget_runs_group"])
+    frame.set_state_children("widget_runs_group", ["widget", "runs"])
+
     frame.set_state_children("widget", ["sim_page"], titles=["Simulation"])
-    frame.set_state_children("sim_page", ["mass_Z_group", "time_group", "imf_type_group", "imf_mass_group", "sn1a_group", "run_sim", "sim_responce"])
+    frame.set_state_children("sim_page", ["mass_Z_group", "time_group", "imf_type_group", "imf_mass_group", "sn1a_group", "run_sim_remove_run_group", "sim_responce"])
     frame.set_state_children("mass_Z_group", ["mass_gas", "init_Z"])
     frame.set_state_children("time_group", ["t_end", "dt"])
     frame.set_state_children("imf_type_group", ["imf_type", "imf_alpha"])
     frame.set_state_children("imf_mass_group", ["imf_mass_min", "imf_mass_max"])
     frame.set_state_children("sn1a_group", ["use_sn1a", "sn1a_rates"])
+    frame.set_state_children("run_sim_remove_run_group", ["run_sim", "remove_run", "run_name"])
+    
+    frame.set_state_children("runs", ["runs_title"])
     
     ###plotting page###
     frame.add_display_object("plot_page")
@@ -115,7 +160,10 @@ def start_SYGMA():
     
     frame.set_state_attribute('window', visible=True, **group_style)
     frame.set_state_attribute('title', visible=True, value="<h1>SYGMA</h1>")
+    frame.set_state_attribute("widget_runs_group", visible=True) ##ADD_STYLE
     frame.set_state_attribute('widget', visible=True, **group_style)
+    frame.set_state_attribute("runs", visible=True)##ADD_STYLE
+    frame.set_state_attribute("runs_title", visible=True, value="<h2>Runs</h2>")##ADD_STYLE
     
     frame.set_state_attribute('sim_page', visible=True, **first_tab_style)
     frame.set_state_attribute("mass_Z_group", visible=True, **group_style)
@@ -140,7 +188,10 @@ def start_SYGMA():
     
     frame.set_state_attribute('sn1a_rates', description="SNe Ia rates: ", options=['Power law', 'Exponential', 'Gaussian'])
     
+    frame.set_state_attribute("run_sim_remove_run_group", visible=True)##ADD_STYLE
     frame.set_state_attribute('run_sim', visible=True, description="Run simulation", **button_style)
+    frame.set_state_attribute("remove_run", visible=True, description="Remove selected")##ADD_STYLE
+    frame.set_state_attribute("run_name", visible=True, description="Run name: ", placeholder="Enter name")
     
     frame.set_state_attribute("sim_responce", value="<p>Simulation data loaded.</p>", **group_style)
     frame.set_state_attribute("sim_responce", states, visible=True)
@@ -199,6 +250,9 @@ def start_SYGMA():
         ##force reset plottype
         frame.set_attributes("plot_type", selected_label="Species mass", value="Species mass")
         frame.set_attributes("plot_type", selected_label="Total mass", value="Total mass")
+        
+        add_run(data, "place_holder", iniZ)
+        frame.update()
     
     
     frame.set_state_callbacks("mass_gas", mass_gas_handler)        
@@ -211,7 +265,11 @@ def start_SYGMA():
     
     frame.set_object("window", widgets.Box())
     frame.set_object("title", widgets.HTML())
+    frame.set_object("widget_runs_group", widgets.HBox())
     frame.set_object("widget", widgets.Tab())
+    frame.set_object("runs", widgets.VBox())
+
+    frame.set_object("runs_title", widgets.HTML())
     
     frame.set_object("sim_page", widgets.VBox())
     frame.set_object("mass_Z_group", widgets.HBox())
@@ -234,7 +292,11 @@ def start_SYGMA():
     frame.set_object("use_sn1a", widgets.Checkbox())
     frame.set_object("sn1a_rates", widgets.Dropdown())
     
+    frame.set_object("run_sim_remove_run_group", widgets.HBox())
     frame.set_object("run_sim", widgets.Button())
+    frame.set_object("remove_run", widgets.Button())
+    frame.set_object("run_name", widgets.Text())
+    
     frame.set_object("sim_responce", widgets.HTML())
     
     frame.set_object("plot_type", widgets.Dropdown())
