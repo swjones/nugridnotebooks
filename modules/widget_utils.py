@@ -21,7 +21,7 @@ class auto_styles:
         self._line_styles = line_styles
     
     def set_line_colors(self, line_colors):
-        self._line_color = line_colors
+        self._line_colors = line_colors
     
     def set_line_markers(self, line_markers):
         self._line_markers = line_markers
@@ -31,7 +31,6 @@ class auto_styles:
         
     def get_style(self):
         style = {}
-
         if len(self._line_styles) != 0:
             line_style = self._line_styles[self._line_count % len(self._line_styles)]
             style["shape"] = line_style
