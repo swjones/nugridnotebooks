@@ -12,6 +12,9 @@ from widget_utils import float_text, auto_styles
 from IPython.html import widgets
 from IPython.display import display, clear_output
 from matplotlib import pyplot
+import numpy
+import shutil
+from imp import load_source
 
 def start_SYGMA():
     frame = framework.framework()
@@ -25,6 +28,7 @@ def start_SYGMA():
     first_tab_style = {"border_radius":"0em 0.5em 0.5em 0.5em"}
     
     custom_imf_dir = os.environ["SYGMADIR"] + "/SYGMA_widget_imfs/"
+    default_custom_imf_text = "\n#File to define a custom IMF\n#Define your IMF in custom_imf\n#so that the return value represents\n#the chosen IMF value for the input mass\n\ndef custom_imf(self,mass):\n    #Salpeter IMF\n    return mass**-2.35\n"
     
     states_plot = ["plot_totmasses", "plot_mass", "plot_spectro", "plot_mass_range"]
     states_sim_plot = ["run_sim"] + states_plot
@@ -185,9 +189,11 @@ def start_SYGMA():
     frame.add_io_object("save_imf")
     
     frame.add_io_object("text_imf")
+    
+    frame.add_io_object("test_imf")
 
     frame.set_state_children("widget", ["custom_imf_page"], titles=["Custom IMF"])
-    frame.set_state_children("custom_imf_page", ["load_save_imf_group", "text_imf"])
+    frame.set_state_children("custom_imf_page", ["load_save_imf_group", "text_imf", "test_imf"])
     frame.set_state_children("load_save_imf_group", ["load_imf", "list_imfs", "name_imf", "save_imf"])
     
     
@@ -209,7 +215,7 @@ def start_SYGMA():
     frame.set_state_attribute('dt', visible=True, description="Time step [yrs]: ", value="1.0e7", **text_box_style)
     
     frame.set_state_attribute('imf_type_group', visible=True, **group_style)
-    frame.set_state_attribute('imf_type', visible=True, description="IMF type: ", options=['salpeter', 'chabrier', 'kroupa', 'alphaimf'])
+    frame.set_state_attribute('imf_type', visible=True, description="IMF type: ", options=['salpeter', 'chabrier', 'kroupa', 'alphaimf'] + list_custom_imf())
     frame.set_state_attribute('imf_alpha', description="Set alpha: ", min=0, max=5)
     
     frame.set_state_attribute("imf_mass_group", visible=True, **group_style)
@@ -274,6 +280,11 @@ def start_SYGMA():
         dt = float(frame.get_attribute("dt", "value"))
         tend = float(frame.get_attribute("t_end", "value"))
         
+        if not (imf_type in ['salpeter', 'chabrier', 'kroupa', 'alphaimf']):
+            destination = os.environ["SYGMADIR"] + "/imf_input.py"
+            shutil.copy(custom_imf_dir + imf_type + ".py", destination)
+            imf_type = "input"
+        
         run_count = frame.get_state_data("run_count")
         name = frame.get_attribute("run_name", "value")
         if name == "":
@@ -303,7 +314,8 @@ def start_SYGMA():
        if open_tab == "custom_imf_page":
            frame.set_state("custom_imf")
        else:
-           frame.set_state("default")
+           if frame.get_state() in states_cimf:
+               frame.set_state("default")
     
     frame.set_state_callbacks("mass_gas", mass_gas_handler)        
     frame.set_state_callbacks("t_end", t_end_handler)        
@@ -553,33 +565,70 @@ def start_SYGMA():
     frame.set_state_attribute("custom_imf_page", visible=True)
     frame.set_state_attribute("load_save_imf_group", visible=True)
     frame.set_state_attribute("load_imf", "custom_imf", visible=True, description="Load custom IMF")
-    frame.set_state_attribute("list_imfs", "load_custom_imf", visible=True, description="IMF")
+    frame.set_state_attribute("list_imfs", "load_custom_imf", visible=True, description="Select IMF")
     frame.set_state_attribute("name_imf", "custom_imf", visible=True, description="IMF name")
     frame.set_state_attribute("save_imf", "custom_imf", visible=True, description="Save IMF")
-    frame.set_state_attribute("text_imf", "custom_imf", visible=True)
+    frame.set_state_attribute("text_imf", visible=True)
+    frame.set_state_attribute("test_imf", visible=True, description="Test selected IMF file")
 
     def load_imf_handler(widget):
         frame.set_state("load_custom_imf")
-        options = ["", "default"] + list_custom_imf()
+        options = ["", "Preset: default"] + list_custom_imf()
         frame.set_attributes("list_imfs", options=options, value="", selected_label="")
     
     def sel_custom_imf(name, value):
         if value != "":
             frame.set_state("custom_imf")
-            frame.set_attributes("name_imf", value=value)
-            if value == "default":
-                frame.set_attributes("text_imf", value="default value")
+            if value == "Preset: default":
+                frame.set_attributes("name_imf", value="")
+                frame.set_attributes("text_imf", value=default_custom_imf_text)
             else:
                 text = ""
                 with open(custom_imf_dir + value + ".py", "r") as fin:
                     text = fin.read()
+                frame.set_attributes("name_imf", value=value)
                 frame.set_attributes("text_imf", value=text)
 
     def save_imf_handler(widget):
-        imf_name = frame.get_
-    
+        clear_output()
+        pyplot.close("all")
+        imf_name = frame.get_attribute("name_imf", "value")
+        
+        if imf_name == "":
+            print("Error: not IMF name given")
+        else:
+            with open(custom_imf_dir + imf_name + ".py", "w") as fout:
+                fout.write(frame.get_attribute("text_imf", "value"))
+            print("Custom IMF saved to " + imf_name)
+            
+        frame.set_state_attribute('imf_type', options=['salpeter', 'chabrier', 'kroupa', 'alphaimf'] + list_custom_imf())
+            
+    def test_imf_handler(widget):
+        clear_output()
+        pyplot.close("all")
+
+        imf_name = frame.get_attribute("name_imf", "value")
+        
+        ci = load_source("custom_imf", custom_imf_dir + imf_name + ".py")
+
+        mass_min = float(frame.get_attribute("imf_mass_min", "value"))
+        mass_max = float(frame.get_attribute("imf_mass_max", "value"))
+        
+        xaxis = numpy.linspace(mass_min, mass_max, 1000)
+        yaxis = [0 for x in xaxis]
+        for i, x in enumerate(xaxis):
+            yaxis[i] = ci.custom_imf(None, x)
+        pyplot.plot(xaxis, yaxis)
+        pyplot.title("IMF file test: " + imf_name)
+        pyplot.xlabel("mass [$M_{\odot}$]")
+        pyplot.ylabel("IMF")
+        pyplot.show()
+
+        
     frame.set_state_callbacks("load_imf", load_imf_handler, attribute=None, type="on_click")
     frame.set_state_callbacks("list_imfs", sel_custom_imf)
+    frame.set_state_callbacks("save_imf", save_imf_handler, attribute=None, type="on_click")
+    frame.set_state_callbacks("test_imf", test_imf_handler, attribute=None, type="on_click")
    
     
     frame.set_object("custom_imf_page", widgets.VBox())
@@ -591,6 +640,8 @@ def start_SYGMA():
     frame.set_object("save_imf", widgets.Button())
 
     frame.set_object("text_imf", widgets.Textarea())
+    
+    frame.set_object("test_imf", widgets.Button())
 
     ##start widget##
     frame.display_object("window")
