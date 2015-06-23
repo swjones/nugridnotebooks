@@ -28,7 +28,7 @@ def start_SYGMA():
     first_tab_style = {"border_radius":"0em 0.5em 0.5em 0.5em"}
     
     custom_imf_dir = os.environ["SYGMADIR"] + "/SYGMA_widget_imfs/"
-    default_custom_imf_text = "\n#File to define a custom IMF\n#Define your IMF in custom_imf\n#so that the return value represents\n#the chosen IMF value for the input mass\n\ndef custom_imf(self,mass):\n    #Salpeter IMF\n    return mass**-2.35\n"
+    default_custom_imf_text = "\n#File to define a custom IMF\n#Define your IMF in custom_imf\n#so that the return value represents\n#the chosen IMF value for the input mass\n\ndef custom_imf(mass):\n    #Salpeter IMF\n    return mass**-2.35\n"
     
     states_plot = ["plot_totmasses", "plot_mass", "plot_spectro", "plot_mass_range"]
     states_sim_plot = ["run_sim"] + states_plot
@@ -313,6 +313,8 @@ def start_SYGMA():
        
        if open_tab == "custom_imf_page":
            frame.set_state("custom_imf")
+           if frame.get_attribute("name_imf", "value") == "":
+               frame.set_attributes("text_imf", value=default_custom_imf_text)
        else:
            if frame.get_state() in states_cimf:
                frame.set_state("default")
@@ -623,7 +625,7 @@ def start_SYGMA():
                 if os.path.isfile(custom_imf_dir + imf_name + ".py"):
                     os.remove(custom_imf_dir + imf_name + ".py")
                     frame.set_attributes("name_imf", value="")
-                    frame.set_attributes("text_imf", value="")
+                    frame.set_attributes("text_imf", value=default_custom_imf_text)
                     print("Custom IMF " + imf_name + " deleted.")
                 else:
                     print("Custom IMF, " + imf_name + ", not found!")
@@ -636,6 +638,10 @@ def start_SYGMA():
 
         imf_name = frame.get_attribute("name_imf", "value")
         
+        if imf_name == "":
+            print("No IMF name given!")
+            return
+        
         ci = load_source("custom_imf", custom_imf_dir + imf_name + ".py")
 
         mass_min = float(frame.get_attribute("imf_mass_min", "value"))
@@ -644,7 +650,7 @@ def start_SYGMA():
         xaxis = numpy.linspace(mass_min, mass_max, 1000)
         yaxis = [0 for x in xaxis]
         for i, x in enumerate(xaxis):
-            yaxis[i] = ci.custom_imf(None, x)
+            yaxis[i] = ci.custom_imf(x)
         pyplot.plot(xaxis, yaxis)
         pyplot.title("IMF file test: " + imf_name)
         pyplot.xlabel("mass [$M_{\odot}$]")
