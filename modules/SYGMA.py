@@ -187,6 +187,7 @@ def start_SYGMA():
     frame.add_io_object("list_imfs")
     frame.add_io_object("name_imf")
     frame.add_io_object("save_imf")
+    frame.add_io_object("delete_imf")
     
     frame.add_io_object("text_imf")
     
@@ -194,9 +195,8 @@ def start_SYGMA():
 
     frame.set_state_children("widget", ["custom_imf_page"], titles=["Custom IMF"])
     frame.set_state_children("custom_imf_page", ["load_save_imf_group", "text_imf", "test_imf"])
-    frame.set_state_children("load_save_imf_group", ["load_imf", "list_imfs", "name_imf", "save_imf"])
-    
-    
+    frame.set_state_children("load_save_imf_group", ["load_imf", "list_imfs", "name_imf", "save_imf", "delete_imf"])
+        
     frame.set_state_attribute('window', visible=True, **group_style)
     frame.set_state_attribute('title', visible=True, value="<center><h1>SYGMA</h1></center>")
     frame.set_state_attribute("widget_runs_group", visible=True, **group_style)
@@ -563,13 +563,16 @@ def start_SYGMA():
 
 
     frame.set_state_attribute("custom_imf_page", visible=True)
-    frame.set_state_attribute("load_save_imf_group", visible=True)
-    frame.set_state_attribute("load_imf", "custom_imf", visible=True, description="Load custom IMF")
+    frame.set_state_attribute("load_save_imf_group", visible=True, **group_style)
+    frame.set_state_attribute("load_imf", "custom_imf", visible=True, description="Load custom IMF", **button_style)
     frame.set_state_attribute("list_imfs", "load_custom_imf", visible=True, description="Select IMF")
-    frame.set_state_attribute("name_imf", "custom_imf", visible=True, description="IMF name")
-    frame.set_state_attribute("save_imf", "custom_imf", visible=True, description="Save IMF")
+    frame.set_state_attribute("name_imf", "custom_imf", visible=True, description="IMF name", **text_box_style)
+    frame.set_state_attribute("save_imf", "custom_imf", visible=True, description="Save IMF", **button_style)
+    frame.set_state_attribute("delete_imf", "custom_imf", visible=True, description="Delete IMF", **button_style)
+
     frame.set_state_attribute("text_imf", visible=True)
-    frame.set_state_attribute("test_imf", visible=True, description="Test selected IMF file")
+
+    frame.set_state_attribute("test_imf", visible=True, description="Test selected IMF file", **button_style)
 
     def load_imf_handler(widget):
         frame.set_state("load_custom_imf")
@@ -597,10 +600,34 @@ def start_SYGMA():
         if imf_name == "":
             print("Error: not IMF name given")
         else:
+        
+            if not os.path.isdir(custom_imf_dir):
+                os.mkdir(custom_imf_dir)
+                
             with open(custom_imf_dir + imf_name + ".py", "w") as fout:
                 fout.write(frame.get_attribute("text_imf", "value"))
             print("Custom IMF saved to " + imf_name)
             
+        frame.set_state_attribute('imf_type', options=['salpeter', 'chabrier', 'kroupa', 'alphaimf'] + list_custom_imf())
+
+    def delete_imf_handler(widget):
+        clear_output()
+        pyplot.close("all")
+        imf_name = frame.get_attribute("name_imf", "value")
+        
+        if imf_name == "":
+            print("Error: not IMF name given")
+        else:
+        
+            if os.path.isdir(custom_imf_dir):
+                if os.path.isfile(custom_imf_dir + imf_name + ".py"):
+                    os.remove(custom_imf_dir + imf_name + ".py")
+                    frame.set_attributes("name_imf", value="")
+                    frame.set_attributes("text_imf", value="")
+                    print("Custom IMF " + imf_name + " deleted.")
+                else:
+                    print("Custom IMF, " + imf_name + ", not found!")
+
         frame.set_state_attribute('imf_type', options=['salpeter', 'chabrier', 'kroupa', 'alphaimf'] + list_custom_imf())
             
     def test_imf_handler(widget):
@@ -628,8 +655,9 @@ def start_SYGMA():
     frame.set_state_callbacks("load_imf", load_imf_handler, attribute=None, type="on_click")
     frame.set_state_callbacks("list_imfs", sel_custom_imf)
     frame.set_state_callbacks("save_imf", save_imf_handler, attribute=None, type="on_click")
+    frame.set_state_callbacks("delete_imf", delete_imf_handler, attribute=None, type="on_click")
     frame.set_state_callbacks("test_imf", test_imf_handler, attribute=None, type="on_click")
-   
+    
     
     frame.set_object("custom_imf_page", widgets.VBox())
 
@@ -638,6 +666,7 @@ def start_SYGMA():
     frame.set_object("list_imfs", widgets.Dropdown())
     frame.set_object("name_imf", widgets.Text())
     frame.set_object("save_imf", widgets.Button())
+    frame.set_object("delete_imf", widgets.Button())
 
     frame.set_object("text_imf", widgets.Textarea())
     
