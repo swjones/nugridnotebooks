@@ -15,11 +15,7 @@ from matplotlib import pyplot, colors
 
 def start_OMEGA():
     tablist = ["sculptor", "carina", "fornax"]
-    yield_tables = {"sculptor":'yield_tables/isotope_yield_table_N06_30Mo_full_IMF.txt',
-                    "carina":'yield_tables/isotope_yield_table_N06_30Mo_full_IMF.txt',
-                    "fornax":'yield_tables/isotope_yield_table_N06_30Mo_full_IMF.txt'}
-#                    "carina":"yield_tables/isotope_yield_table_N06_40Mo_full_IMF_25Mo_0_0001.txt",
-#                    "fornax":"yield_tables/isotope_yield_table_N06_40Mo_full_IMF_25Mo_0_0001.txt"}
+    yield_table = 'yield_tables/isotope_yield_table_N06_30Mo_full_IMF.txt'
                     
     mgal_factor = {"sculptor":1.51e9, "carina":3.4e6, "fornax":7.08e8}
                     
@@ -195,7 +191,7 @@ def start_OMEGA():
         
         mgal = f_baryon * mgal_factor[state]
         data = omega.omega(galaxy=state, in_out_control=True, mgal=mgal, mass_loading=loading_mass, 
-                           nb_1a_per_m=sn1a_pmil, table=yield_tables[state])
+                           nb_1a_per_m=sn1a_pmil, table=yield_table)
         
         add_run(state, data, name)
         frame.update()
@@ -540,8 +536,8 @@ def start_test_with_alpha_elements():
     frame.set_object("runs", widgets.VBox())
     frame.set_object("runs_title", widgets.HTML())
     
-    frame.set_object("select_elem", widgets.Dropdown())
-    frame.set_object("plot", widgets.Button())
+    frame.set_object("select_elem", widgets.Dropdown()) 
+    frame.set_object("plot", widgets.Button()) 
     frame.set_object("warning_msg", widgets.HTML())
 
     ##start widget##
