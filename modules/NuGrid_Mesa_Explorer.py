@@ -59,8 +59,12 @@ def start_explorer(global_namespace):
     frame.add_io_object("warning_msg")
 
     frame.add_io_object("plot_name")
+    
+    frame.add_display_object("cycle_sparsity_group")
     frame.add_io_object("cycle")
     frame.add_io_object("cycle_range")
+    frame.add_io_object("sparisty")
+
     frame.add_io_object("movie_type")
 
     frame.add_display_object("xax")
@@ -103,9 +107,10 @@ def start_explorer(global_namespace):
     frame.add_io_object("generate_plot")
 
     frame.set_state_children("widget", ["page_plotting"], titles=["Plotting"])
-    frame.set_state_children("page_plotting", ["select_plot", "warning_msg", "plot_name", "movie_type", "variable_name", "cycle", "cycle_range",
+    frame.set_state_children("page_plotting", ["select_plot", "warning_msg", "plot_name", "movie_type", "variable_name", "cycle_sparsity_group",
                                                "xax", "yax", "stable", "mass_settings", "kipp_settings", 
                                                "lim_settings", "abu_settings", "stable", "generate_plot"])
+    frame.set_state_children("cycle_sparsity_group", ["cycle", "cycle_range", "sparsity"])
     frame.set_state_children("xax", ["xaxis", "logx"])
     frame.set_state_children("yax", ["yaxis", "logy"])
     frame.set_state_children("mass_settings", ["set_amass", "amass_range", "set_mass", "mass_range",
@@ -276,8 +281,10 @@ def start_explorer(global_namespace):
     frame.set_state_attribute("variable_name", ["get_data", "nugrid_get_data"], visible=True, description="Variable name: ", placeholder="Enter name.", **text_box_style)
 
     frame.set_state_attribute('movie_type', states_movie, visible=True, description="Movie Type: ", options={"":"movie", "Isotope abundance":"movie_iso_abund", "Abundance chart":"movie_abu_chart"})
+    frame.set_state_attribute('cycle_sparsity_group', states_nugrid[1:] + states_mesa[1:] + states_movie, visible=True, **group_style)
     frame.set_state_attribute('cycle', ["iso_abund", "abu_chart", "nugrid_plot", "nugrid_get_data"], visible=True, description="cycle: ")
     frame.set_state_attribute('cycle_range', states_movie[1:], visible=True)
+    frame.set_state_attribute('sparsity', states_movie[1:], visible=True, description="Sparsity: ", value="20")
 
     frame.set_state_attribute('xax', ["plot", "nugrid_plot", "get_data", "nugrid_get_data"], visible=True, **group_style)
     frame.set_state_attribute('xaxis', visible=True, description="select X-axis: ")
@@ -540,8 +547,12 @@ def start_explorer(global_namespace):
     frame.set_object("plot_name", widgets.HTML())
     frame.set_object("movie_type", widgets.Dropdown())
     frame.set_object("variable_name", widgets.Text())
+
+    frame.set_object("cycle_sparsity_group", widgets.HBox())
     frame.set_object("cycle", widgets.IntSlider())
     frame.set_object("cycle_range", widgets.IntRangeSlider())
+    frame.set_object("sparsity", widgets.Text())
+    
     frame.set_object("xax", widgets.HBox())
     frame.set_object("xaxis", widgets.Select())
     frame.set_object("logx", widgets.Checkbox())

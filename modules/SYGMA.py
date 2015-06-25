@@ -21,7 +21,7 @@ def start_SYGMA():
     frame.set_default_display_style(padding="0.25em",background_color="white", border_color="LightGrey", border_radius="0.5em")
     frame.set_default_io_style(padding="0.25em", margin="0.25em", border_color="LightGrey", border_radius="0.5em")
     
-    tablist = ["sim_page", "plot_page", "custom_imf_page"]
+    tablist = ["sim_page", "plot_page", "custom_imf_page", "get_table_page"]
     group_style = {"border_style":"none", "border_radius":"0em"}
     text_box_style = {"width":"10em"}
     button_style = {"font_size":"1.25em", "font_weight":"bold"}
@@ -42,7 +42,8 @@ def start_SYGMA():
     elements_sn1a=['C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni']
     
     line_styles=["-", "--", ":", "-."]
-    line_colors=["k", "r", "g", "b", "c", "m", "y"]
+#    line_colors=["k", "r", "g", "b", "c", "m", "y"]
+    line_colors=["k", "r", "b", "c", "m", "y"]#remove "g"
     line_markers = ["o", "s", "x", "D", "v", "^", "<", ">", "p", "*", "+"]
     
     styles = auto_styles()
@@ -196,7 +197,22 @@ def start_SYGMA():
     frame.set_state_children("widget", ["custom_imf_page"], titles=["Custom IMF"])
     frame.set_state_children("custom_imf_page", ["load_save_imf_group", "text_imf", "test_imf"])
     frame.set_state_children("load_save_imf_group", ["load_imf", "list_imfs", "name_imf", "save_imf", "delete_imf"])
-        
+
+
+    ###plotting page###
+    frame.add_display_object("get_table_page")
+
+    frame.add_display_object("spieces_mult_group")
+    frame.add_io_object("spieces_mult")
+    
+    frame.add_io_object("get_table")
+    frame.add_io_object("table_links")
+    
+    frame.set_state_children("widget", ["get_table_page"], titles=["Download Tables"])
+    frame.set_state_children("get_table_page", ["warning_msg",  "spieces_mult_group", "get_table", "table_links"])
+    frame.set_state_children("spieces_mult_group", ["iso_or_elem", "spieces_mult"])
+    
+            
     frame.set_state_attribute('window', visible=True, **group_style)
     frame.set_state_attribute('title', visible=True, value="<center><h1>SYGMA</h1></center>")
     frame.set_state_attribute("widget_runs_group", visible=True, **group_style)
@@ -386,6 +402,7 @@ def start_SYGMA():
     frame.set_state_attribute("spieces_group", ["plot_mass", "plot_mass_range"], visible=True, **group_style)
     frame.set_state_attribute("iso_or_elem", visible=True, description="Spieces type: ", options=["Elements", "Isotopes"], selected_label="Elements")
     frame.set_state_attribute("spieces", visible=True, description="Element: ", options=elements_all, **text_box_style)
+    frame.set_state_attribute("spieces_mult", visible=True, description="Element: ", options=elements_all, **text_box_style)
     frame.set_state_attribute("elem_numer", "plot_spectro", visible=True, description="Y-axis [X/Y], choose X: ", options=elements_all, **text_box_style)
     frame.set_state_attribute("elem_denom", "plot_spectro", visible=True, description="Y-axis [X/Y], choose Y: ", options=elements_all, **text_box_style)
     frame.set_state_attribute("plot", states_plot, visible=True, description="Generate Plot", **button_style)
@@ -438,8 +455,10 @@ def start_SYGMA():
         isotopes = frame.get_state_data("isotopes")
         if value=="Isotopes":
             frame.set_attributes("spieces", description="Isotope: ", options=isotopes)
+            frame.set_attributes("spieces_mult", description="Isotope: ", options=isotopes)
         elif value=="Elements":
             frame.set_attributes("spieces", description="Element: ", options=elements)
+            frame.set_attributes("spieces_mult", description="Element: ", options=elements)
         
     def run(widget):
         styles = frame.get_state_data("styles")
@@ -642,7 +661,11 @@ def start_SYGMA():
             print("No IMF name given!")
             return
         
-        ci = load_source("custom_imf", custom_imf_dir + imf_name + ".py")
+        try:
+            ci = load_source("custom_imf", custom_imf_dir + imf_name + ".py")
+        except IOError:
+            print("Failed to load " + imf_name + ", no IMF file found.")
+            return
 
         mass_min = float(frame.get_attribute("imf_mass_min", "value"))
         mass_max = float(frame.get_attribute("imf_mass_max", "value"))
@@ -651,7 +674,7 @@ def start_SYGMA():
         yaxis = [0 for x in xaxis]
         for i, x in enumerate(xaxis):
             yaxis[i] = ci.custom_imf(x)
-        pyplot.plot(xaxis, yaxis)
+        pyplot.plot(xaxis, numpy.log10(yaxis))
         pyplot.title("IMF file test: " + imf_name)
         pyplot.xlabel("mass [$M_{\odot}$]")
         pyplot.ylabel("IMF")
@@ -677,6 +700,49 @@ def start_SYGMA():
     frame.set_object("text_imf", widgets.Textarea())
     
     frame.set_object("test_imf", widgets.Button())
+
+
+    frame.set_state_attribute("get_table_page", visible=True)
+
+    frame.set_state_attribute("warning_msg", visible=True, value="<h3>Error: No simulation data!</h3>", **group_style)
+    frame.set_state_attribute("warning_msg", states_plot, visible=False)
+    
+    frame.set_state_attribute("spieces_mult_group", states_sim_plot, visible=True, **group_style)
+    frame.set_state_attribute("iso_or_elem", visible=True, description="Spieces type: ", options=["Elements", "Isotopes"], selected_label="Elements")
+    frame.set_state_attribute("spieces", visible=True, description="Element: ", options=elements_all, **text_box_style)
+
+    frame.set_state_attribute("get_table", states_sim_plot, visible=True, description="Get table links", **button_style)
+    frame.set_state_attribute("table_links", states_sim_plot, visible=True, value="test", **group_style)
+
+    def get_table_handler(widget):
+        clear_output()
+        pyplot.close("all")
+
+        iso_or_elem = frame.get_attribute("iso_or_elem", "value")
+        spieces = list(frame.get_attribute("spieces_mult", "value"))
+
+        runs = frame.get_state_data("runs")
+        html = ""
+        
+        for data, name, Z, widget_name in runs:
+            if frame.get_attribute(widget_name, "value"):
+                if iso_or_elem == "Elements":
+                    data.write_evol_table(spieces, [], widget_name + ".txt", "./evol_tables")
+                elif iso_or_elem == "Isotopes":
+                    data.write_evol_table([], spieces, widget_name + ".txt", "./evol_tables/")
+                file = "/files/evol_tables/" + widget_name + ".txt"
+                html = html + "<p><a href=\"" + file + "\" target=\"_blank\">" + name + "</a></p>\n"
+        
+        frame.set_attributes("table_links", value=html)
+        
+    
+    frame.set_state_callbacks("get_table", get_table_handler, attribute=None, type="on_click")
+
+    frame.set_object("spieces_mult_group", widgets.VBox())
+    frame.set_object("spieces_mult", widgets.SelectMultiple())
+    frame.set_object("get_table_page", widgets.VBox())
+    frame.set_object("get_table", widgets.Button())
+    frame.set_object("table_links", widgets.HTML())
 
     ##start widget##
     frame.display_object("window")
