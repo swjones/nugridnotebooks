@@ -11,7 +11,7 @@ def start_PPM(local_dir="./"):
     frame.set_default_display_style(padding="0.25em",background_color="white", border_color="LightGrey", border_radius="0.5em")
     frame.set_default_io_style(padding="0.25em", margin="0.25em", border_color="LightGrey", border_radius="0.5em")        
     
-    group_style = {"border_style":"none", "border_radius":"0em"}
+    group_style = {"border_style":"none", "border_radius":"0em", "width":"100%"}
     text_box_style = {"width":"10em"}
     button_style = {"font_size":"1.25em", "font_weight":"bold"}
     first_tab_style = {"border_radius":"0em 0.5em 0.5em 0.5em"}
@@ -162,10 +162,18 @@ def start_PPM(local_dir="./"):
             name = "Data set - " + "%03d" % (data_set_count + 1, )
             
         data = ppm.yprofile(dir)
+        frame.set_state("data_loaded")
+        
+        frame.set_attributes("select_plot", selected_label="tEkmax", value="tEkmax")
+        frame.set_attributes("select_plot", selected_label="prof_time", value="prof_time")
+        
+        cycs = data.cycles
+        frame.set_state_attribute("yaxis", options=data.dcols)
+        frame.set_state_attribute("cycle_range", min=cycs[0], max=cycs[-1], value=(cycs[0], cycs[-1]))
+
         add_data_set(data, name)
         frame.update()
         
-        frame.set_state("data_loaded")
         
     def data_set_remove_handler(widget):
         remove_data_set()
@@ -204,7 +212,7 @@ def start_PPM(local_dir="./"):
     
     frame.set_state_attribute("cycle_range_group", "plot_prof_time", visible=True, **group_style)
     frame.set_state_attribute("cycle_range", visible=True, description="Cycle range:")
-    frame.set_state_attribute("cycle_sparsity", visible=True, description="Cycle sparsity", value="1", **text_box_style)
+    frame.set_state_attribute("cycle_sparsity", visible=True, description="Cycle sparsity", value=1)
     
     frame.set_state_attribute("yaxis_group", "plot_prof_time", visible=True, **group_style)
     frame.set_state_attribute("yaxis", visible=True, description="Yaxis:", options=["vXZ", "A"])
@@ -256,7 +264,7 @@ def start_PPM(local_dir="./"):
     frame.set_object("warning_msg", widgets.HTML())
     frame.set_object("cycle_range_group", widgets.HBox())
     frame.set_object("cycle_range", widgets.IntRangeSlider())
-    frame.set_object("cycle_sparsity", widgets.Text())
+    frame.set_object("cycle_sparsity", widgets.IntText())
     
     frame.set_object("yaxis_group", widgets.HBox())
     frame.set_object("yaxis", widgets.Select())
