@@ -154,7 +154,7 @@ class framework():
     def get_state(self):
         return self._state
     
-    def set_state(self, state):
+    def set_state(self, state="default"):
         if state in self._state_list:
             self._state = state
             self.update()

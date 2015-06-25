@@ -109,8 +109,9 @@ def start_SYGMA():
     frame.add_io_object("title")
     frame.add_display_object("widget_runs_group")
     frame.add_display_object("widget")
+
     frame.add_display_object("runs")
-    frame.add_display_object("runs_title")
+    frame.add_io_object("runs_title")
     
     ###Sim page###
     frame.add_display_object("sim_page")
@@ -161,8 +162,8 @@ def start_SYGMA():
     ###plotting page###
     frame.add_display_object("plot_page")
     
-    frame.add_display_object("warning_msg")
-    frame.add_display_object("plot_name")
+    frame.add_io_object("warning_msg")
+    frame.add_io_object("plot_name")
     
     frame.add_display_object("source_over_plotting_group")
     frame.add_io_object("source")
