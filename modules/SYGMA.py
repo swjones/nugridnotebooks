@@ -55,6 +55,7 @@ def start_SYGMA():
     frame.set_state_data("isotopes", isotopes_all)
     frame.set_state_data("over_plotting_data", [])    
     frame.set_state_data("styles", styles)    
+    frame.set_state_data("old_state", None)
     
     frame.set_state_data("runs", [])
     frame.set_state_data("run_count", 0)
@@ -328,12 +329,18 @@ def start_SYGMA():
        open_tab = tablist[value]
        
        if open_tab == "custom_imf_page":
+           frame.set_state_data("old_state", frame.get_state())
            frame.set_state("custom_imf")
            if frame.get_attribute("name_imf", "value") == "":
                frame.set_attributes("text_imf", value=default_custom_imf_text)
        else:
            if frame.get_state() in states_cimf:
-               frame.set_state("default")
+               old_state = frame.get_state_data("old_state")
+               if old_state != None:
+                   frame.set_state(old_state)
+               else:
+                   frame.set_state("default")
+               frame.set_state_data("old_state", None)
     
     frame.set_state_callbacks("mass_gas", mass_gas_handler)        
     frame.set_state_callbacks("t_end", t_end_handler)        
@@ -675,8 +682,8 @@ def start_SYGMA():
             print("Failed to load " + imf_name + ", no IMF file found.")
             return
 
-        mass_min = float(frame.get_attribute("imf_mass_min", "value"))
-        mass_max = float(frame.get_attribute("imf_mass_max", "value"))
+        mass_min = 0.0
+        mass_max = 30.0
         
         xaxis = numpy.linspace(mass_min, mass_max, 1000)
         yaxis = [0 for x in xaxis]
@@ -738,7 +745,7 @@ def start_SYGMA():
         
         for data, name, Z, widget_name in runs:
             if frame.get_attribute(widget_name, "value"):
-                file = "evol_tables/" + widget_name.replace("#", "-") + ".txt"
+                file = "evol_tables/" + widget_name.replace("#", "") + ".txt"
                 if iso_or_elem == "Elements":
                     data.write_evol_table(spieces, [], file, "./")
                 elif iso_or_elem == "Isotopes":
