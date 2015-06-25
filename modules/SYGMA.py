@@ -22,6 +22,7 @@ def start_SYGMA():
     frame.set_default_io_style(padding="0.25em", margin="0.25em", border_color="LightGrey", border_radius="0.5em")
     
     tablist = ["sim_page", "plot_page", "custom_imf_page", "get_table_page"]
+    yield_list = {"isotope_yield_table.txt":"yield_tables/isotope_yield_table.txt"}
     group_style = {"border_style":"none", "border_radius":"0em"}
     text_box_style = {"width":"10em"}
     button_style = {"font_size":"1.25em", "font_weight":"bold"}
@@ -133,6 +134,7 @@ def start_SYGMA():
     frame.add_display_object("sn1a_group")
     frame.add_io_object("use_sn1a")
     frame.add_io_object("sn1a_rates")
+    frame.add_io_object("yield_table_list")
 
     frame.add_display_object("run_sim_remove_run_group")
     frame.add_io_object("run_sim")
@@ -151,7 +153,7 @@ def start_SYGMA():
     frame.set_state_children("time_group", ["t_end", "dt"])
     frame.set_state_children("imf_type_group", ["imf_type", "imf_alpha"])
     frame.set_state_children("imf_mass_group", ["imf_mass_min", "imf_mass_max"])
-    frame.set_state_children("sn1a_group", ["use_sn1a", "sn1a_rates"])
+    frame.set_state_children("sn1a_group", ["use_sn1a", "sn1a_rates", "yield_table_list"])
     frame.set_state_children("run_sim_remove_run_group", ["run_sim", "remove_run", "run_name"])
     
     frame.set_state_children("runs", ["runs_title"])
@@ -241,6 +243,7 @@ def start_SYGMA():
     
     frame.set_state_attribute('sn1a_group', visible=True, **group_style)
     frame.set_state_attribute('use_sn1a', visible=True, description="Include SNe Ia: ", value=True)
+    frame.set_state_attribute('yield_table_list', visible=True, description="Yield table:", options=yield_list)
     frame.set_state_links("sn1a_link", [("use_sn1a", "value"), ("sn1a_rates", "visible")], directional=True)
     
     frame.set_state_attribute('sn1a_rates', description="SNe Ia rates: ", options=['Power law', 'Exponential', 'Gaussian'])
@@ -296,6 +299,7 @@ def start_SYGMA():
         sn1a_rate = sn1a_map[frame.get_attribute("sn1a_rates", "value")]
         dt = float(frame.get_attribute("dt", "value"))
         tend = float(frame.get_attribute("t_end", "value"))
+        yield_table = frame.get_attribute("yield_table_list", "value")
         
         if not (imf_type in ['salpeter', 'chabrier', 'kroupa', 'alphaimf']):
             destination = os.environ["SYGMADIR"] + "/imf_input.py"
@@ -309,10 +313,10 @@ def start_SYGMA():
         
         if iniZ==0.0:
             data=s.sygma(mgal=mgal, iniZ=iniZ, imf_type=imf_type, alphaimf=alphaimf, imf_bdys=[10.1, 100.0], imf_bdys_pop3=imf_bdys, sn1a_on=sn1a_on,
-                         sn1a_rate=sn1a_rate, dt=dt,tend=tend)
+                         sn1a_rate=sn1a_rate, dt=dt,tend=tend, table=yield_table)
         else:
             data=s.sygma(mgal=mgal, iniZ=iniZ, imf_type=imf_type, alphaimf=alphaimf, imf_bdys=imf_bdys, sn1a_on=sn1a_on,
-                         sn1a_rate=sn1a_rate, dt=dt,tend=tend)
+                         sn1a_rate=sn1a_rate, dt=dt,tend=tend, table=yield_table)
         frame.set_state("run_sim")
         ##force reset plottype
         frame.set_attributes("plot_type", selected_label="Species mass", value="Species mass")
@@ -380,6 +384,7 @@ def start_SYGMA():
     frame.set_object("sn1a_group", widgets.HBox())
     frame.set_object("use_sn1a", widgets.Checkbox())
     frame.set_object("sn1a_rates", widgets.Dropdown())
+    frame.set_object("yield_table_list", widgets.Dropdown())
     
     frame.set_object("run_sim_remove_run_group", widgets.HBox())
     frame.set_object("run_sim", widgets.Button())
