@@ -477,6 +477,8 @@ def start_SYGMA():
         label_source = label_map[frame.get_attribute("source", "value")]
         spieces = frame.get_attribute("spieces", "value")
         
+        no_runs = True
+        
         if state=="plot_totmasses":
             plot_data = frame.get_state_data("over_plotting_data")
             
@@ -490,6 +492,7 @@ def start_SYGMA():
             
             for data, name, Z, widget_name in runs:
                 if frame.get_attribute(widget_name, "value"):
+                    no_runs = False
                     for item in plot_data:
                         kwargs = dict(item)
                         label = name + ": " + tot_mass_labels[kwargs["source"]]
@@ -509,6 +512,7 @@ def start_SYGMA():
             
             for data, name, Z, widget_name in runs:
                 if frame.get_attribute(widget_name, "value"):
+                    no_runs = False
                     for item in plot_data:
                         kwargs = dict(item)
                         label = name + ": " + kwargs["specie"]
@@ -534,6 +538,7 @@ def start_SYGMA():
             
             for data, name, Z, widget_name in runs:
                 if frame.get_attribute(widget_name, "value"):
+                    no_runs = False
                     for item in plot_data:
                         kwargs = dict(item)
                         label = name + ": " + kwargs["yaxis"] + ", " + tot_mass_labels[kwargs["source"]]
@@ -553,12 +558,15 @@ def start_SYGMA():
             
             for data, name, Z, widget_name in runs:
                 if frame.get_attribute(widget_name, "value"):
+                    no_runs = False
                     for item in plot_data:
                         kwargs = dict(item)
                         label = name + ": " + kwargs["specie"]
                         kwargs.update({"label":label})
                         kwargs.update(styles.get_style())
                         data.plot_mass_range_contributions(**kwargs)
+        if no_runs:
+            print "No runs selected."                
 
     
     frame.set_state_callbacks("clear_plot", clear_plot_handler, attribute=None, type="on_click")
@@ -712,7 +720,7 @@ def start_SYGMA():
     frame.set_state_attribute("spieces", visible=True, description="Element: ", options=elements_all, **text_box_style)
 
     frame.set_state_attribute("get_table", states_sim_plot, visible=True, description="Get table links", **button_style)
-    frame.set_state_attribute("table_links", states_sim_plot, visible=True, value="test", **group_style)
+    frame.set_state_attribute("table_links", states_sim_plot, visible=True, value="", **group_style)
 
     def get_table_handler(widget):
         clear_output()
@@ -722,16 +730,24 @@ def start_SYGMA():
         spieces = list(frame.get_attribute("spieces_mult", "value"))
 
         runs = frame.get_state_data("runs")
-        html = ""
+        title = "<h3>Data table links:</h3>"
+        html = title
+        
+        if not os.path.isdir("./evol_tables"):
+            os.mkdir("./evol_tables")
         
         for data, name, Z, widget_name in runs:
             if frame.get_attribute(widget_name, "value"):
+                file = "evol_tables/" + widget_name.replace("#", "-") + ".txt"
                 if iso_or_elem == "Elements":
-                    data.write_evol_table(spieces, [], widget_name + ".txt", "./evol_tables")
+                    data.write_evol_table(spieces, [], file, "./")
                 elif iso_or_elem == "Isotopes":
-                    data.write_evol_table([], spieces, widget_name + ".txt", "./evol_tables/")
-                file = "/files/evol_tables/" + widget_name + ".txt"
+                    data.write_evol_table([], spieces, file, "./")
                 html = html + "<p><a href=\"" + file + "\" target=\"_blank\">" + name + "</a></p>\n"
+        
+        if html == title:
+            html = ""
+            print("No runs selected.")
         
         frame.set_attributes("table_links", value=html)
         
