@@ -41,6 +41,8 @@ def start_SYGMA():
     elements_all=['H','He','Li','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni']
     isotopes_sn1a=['C-12','C-13','N-14','N-15','O-16','O-17','O-18','F-19','Ne-20','Ne-21','Ne-22','Na-23','Mg-24','Mg-25','Mg-26','Al-27','Si-28','Si-29','Si-30','P-31','S-32','S-33','S-34','S-36','Cl-35','Cl-37','Ar-36','Ar-38','Ar-40','K-39','K-40','K-41','Ca-40','Ca-42','Ca-43','Ca-44','Ca-46','Ca-48','Sc-45','Ti-46','Ti-47','Ti-48','Ti-49','Ti-50','V-50','V-51','Cr-50','Cr-52','Cr-53','Cr-54','Mn-55','Fe-54','Fe-56','Fe-57','Fe-58','Co-59','Ni-58','Ni-60','Ni-61','Ni-62','Ni-64']
     elements_sn1a=['C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni']
+    isotopes_sel_mult = ["All"] + isotopes_all
+    elements_sel_mult = ["All"] + elements_all
     
     line_styles=["-", "--", ":", "-."]
 #    line_colors=["k", "r", "g", "b", "c", "m", "y"]
@@ -55,7 +57,7 @@ def start_SYGMA():
     frame.set_state_data("elements", elements_all)
     frame.set_state_data("isotopes", isotopes_all)
     frame.set_state_data("over_plotting_data", [])    
-    frame.set_state_data("styles", styles)    
+    frame.set_state_data("styles", styles)
     frame.set_state_data("old_state", None)
     
     frame.set_state_data("runs", [])
@@ -170,18 +172,18 @@ def start_SYGMA():
     frame.add_io_object("over_plotting")
     frame.add_io_object("clear_plot")
     
-    frame.add_display_object("spieces_group")
+    frame.add_display_object("species_group")
     frame.add_io_object("iso_or_elem")
-    frame.add_io_object("spieces")
+    frame.add_io_object("species")
     
     frame.add_io_object("elem_numer")
     frame.add_io_object("elem_denom")
     frame.add_io_object("plot")
     
     frame.set_state_children("widget", ["plot_page"], titles=["Plotting"])
-    frame.set_state_children("plot_page", ["warning_msg", "plot_type", "plot_name", "source_over_plotting_group", "spieces_group", "elem_numer", "elem_denom", "plot"])
+    frame.set_state_children("plot_page", ["warning_msg", "plot_type", "plot_name", "source_over_plotting_group", "species_group", "elem_numer", "elem_denom", "plot"])
     frame.set_state_children("source_over_plotting_group", ["source", "over_plotting", "clear_plot"])
-    frame.set_state_children("spieces_group", ["iso_or_elem", "spieces"])
+    frame.set_state_children("species_group", ["iso_or_elem", "species"])
     
     
     ###Custom IMF page###
@@ -206,16 +208,16 @@ def start_SYGMA():
     ###plotting page###
     frame.add_display_object("get_table_page")
 
-    frame.add_display_object("spieces_mult_group")
-    frame.add_io_object("spieces_mult")
+    frame.add_display_object("species_mult_group")
+    frame.add_io_object("species_mult")
     
     frame.add_io_object("get_table")
     frame.add_io_object("table_links")
     
     frame.set_state_children("widget", ["get_table_page"], titles=["Download Tables"])
-    frame.set_state_children("get_table_page", ["warning_msg",  "spieces_mult_group", "get_table", "table_links"])
-    frame.set_state_children("spieces_mult_group", ["iso_or_elem", "spieces_mult"])
-    
+    frame.set_state_children("get_table_page", ["warning_msg",  "species_mult_group", "get_table", "table_links"])
+    frame.set_state_children("species_mult_group", ["iso_or_elem", "species_mult"])
+        
             
     frame.set_state_attribute('window', visible=True, **group_style)
     frame.set_state_attribute('title', visible=True, value="<center><h1>SYGMA</h1></center>")
@@ -412,10 +414,9 @@ def start_SYGMA():
     frame.set_state_attribute("clear_plot", description="Clear plot", **button_style)
     frame.set_state_links("clear_plot_link", [("over_plotting", "value"), ("clear_plot", "visible")], directional=True)
     
-    frame.set_state_attribute("spieces_group", ["plot_mass", "plot_mass_range"], visible=True, **group_style)
-    frame.set_state_attribute("iso_or_elem", visible=True, description="Spieces type: ", options=["Elements", "Isotopes"], selected_label="Elements")
-    frame.set_state_attribute("spieces", visible=True, description="Element: ", options=elements_all, **text_box_style)
-    frame.set_state_attribute("spieces_mult", visible=True, description="Element: ", options=elements_all, **text_box_style)
+    frame.set_state_attribute("species_group", ["plot_mass", "plot_mass_range"], visible=True, **group_style)
+    frame.set_state_attribute("iso_or_elem", visible=True, description="species type: ", options=["Elements", "Isotopes"], selected_label="Elements")
+    frame.set_state_attribute("species", visible=True, description="Element: ", options=elements_all, **text_box_style)
     frame.set_state_attribute("elem_numer", "plot_spectro", visible=True, description="Y-axis [X/Y], choose X: ", options=elements_all, **text_box_style)
     frame.set_state_attribute("elem_denom", "plot_spectro", visible=True, description="Y-axis [X/Y], choose Y: ", options=elements_all, **text_box_style)
     frame.set_state_attribute("plot", states_plot, visible=True, description="Generate Plot", **button_style)
@@ -451,7 +452,7 @@ def start_SYGMA():
             frame.set_state_data("isotopes", isotopes_all)
             frame.set_attributes("elem_numer", options=[])
             frame.set_attributes("elem_denom", options=[])
-            frame.set_attributes("spieces", options=[])
+            frame.set_attributes("species", options=[])
     
         elements = frame.get_state_data("elements")
         isotopes = frame.get_state_data("isotopes")
@@ -459,19 +460,19 @@ def start_SYGMA():
         frame.set_attributes("elem_denom", options=elements)
         
         if frame.get_attribute("iso_or_elem", "value")=="Isotopes":
-            frame.set_attributes("spieces", description="Isotope: ", options=isotopes)
+            frame.set_attributes("species", description="Isotope: ", options=isotopes)
         elif frame.get_attribute("iso_or_elem", "value")=="Elements":
-            frame.set_attributes("spieces", description="Element: ", options=elements)
+            frame.set_attributes("species", description="Element: ", options=elements)
     
     def sel_iso_or_elem(attribute, value):
         elements = frame.get_state_data("elements")
         isotopes = frame.get_state_data("isotopes")
         if value=="Isotopes":
-            frame.set_attributes("spieces", description="Isotope: ", options=isotopes)
-            frame.set_attributes("spieces_mult", description="Isotope: ", options=isotopes)
+            frame.set_attributes("species", description="Isotope: ", options=isotopes)
+            frame.set_attributes("species_mult", description="Isotope: ", options=isotopes_sel_mult)
         elif value=="Elements":
-            frame.set_attributes("spieces", description="Element: ", options=elements)
-            frame.set_attributes("spieces_mult", description="Element: ", options=elements)
+            frame.set_attributes("species", description="Element: ", options=elements)
+            frame.set_attributes("species_mult", description="Element: ", options=elements_sel_mult)
         
     def run(widget):
         styles = frame.get_state_data("styles")
@@ -488,7 +489,7 @@ def start_SYGMA():
         runs = frame.get_state_data("runs")
         source = source_map[frame.get_attribute("source", "value")]
         label_source = label_map[frame.get_attribute("source", "value")]
-        spieces = frame.get_attribute("spieces", "value")
+        species = frame.get_attribute("species", "value")
         
         no_runs = True
         
@@ -518,7 +519,7 @@ def start_SYGMA():
             if not over_plotting:
                 plot_data = []
             
-            over_plot = [("specie", spieces), ("source", source)]
+            over_plot = [("specie", species), ("source", source)]
             if not over_plot in plot_data:
                 plot_data.append(over_plot)
                 frame.set_state_data("over_plotting_data", plot_data)
@@ -564,7 +565,7 @@ def start_SYGMA():
             if not over_plotting:
                 plot_data = []
             
-            over_plot = [("specie", spieces)]
+            over_plot = [("specie", species)]
             if not over_plot in plot_data:
                 plot_data.append(over_plot)
                 frame.set_state_data("over_plotting_data", plot_data)
@@ -596,9 +597,9 @@ def start_SYGMA():
     frame.set_object("source", widgets.Dropdown())
     frame.set_object("over_plotting", widgets.ToggleButton())
     frame.set_object("clear_plot", widgets.Button())
-    frame.set_object("spieces_group", widgets.VBox())
+    frame.set_object("species_group", widgets.VBox())
     frame.set_object("iso_or_elem", widgets.RadioButtons())
-    frame.set_object("spieces", widgets.Select())
+    frame.set_object("species", widgets.Select())
     frame.set_object("elem_numer", widgets.Select())
     frame.set_object("elem_denom", widgets.Select())
     frame.set_object("plot", widgets.Button())
@@ -691,7 +692,7 @@ def start_SYGMA():
         mass_min = 0.0
         mass_max = 30.0
         
-        xaxis = numpy.linspace(mass_min, mass_max, 1000)
+        xaxis = numpy.linspace(mass_min, mass_max, 1000)[1:]
         yaxis = [0 for x in xaxis]
         for i, x in enumerate(xaxis):
             yaxis[i] = ci.custom_imf(x)
@@ -728,19 +729,26 @@ def start_SYGMA():
     frame.set_state_attribute("warning_msg", visible=True, value="<h3>Error: No simulation data!</h3>", **group_style)
     frame.set_state_attribute("warning_msg", states_plot, visible=False)
     
-    frame.set_state_attribute("spieces_mult_group", states_sim_plot, visible=True, **group_style)
-    frame.set_state_attribute("iso_or_elem", visible=True, description="Spieces type: ", options=["Elements", "Isotopes"], selected_label="Elements")
-    frame.set_state_attribute("spieces", visible=True, description="Element: ", options=elements_all, **text_box_style)
+    frame.set_state_attribute("species_mult_group", states_sim_plot, visible=True, **group_style)
+    frame.set_state_attribute("iso_or_elem", visible=True, description="species type: ", options=["Elements", "Isotopes"], selected_label="Elements")
+    frame.set_state_attribute("species_mult", visible=True, description="Element: ", options=elements_sel_mult, **text_box_style)
 
     frame.set_state_attribute("get_table", states_sim_plot, visible=True, description="Get table links", **button_style)
     frame.set_state_attribute("table_links", states_sim_plot, visible=True, value="", **group_style)
-
+    
+    def species_mult_handler(name, value):
+        if "All" in value:
+            iso_or_elem = frame.get_attribute("iso_or_elem", "value")
+            if iso_or_elem == "Elements":
+                value = tuple(elements_all)
+            elif iso_or_elem == "Isotopes":
+                value = tuple(isotopes_all)
+            frame.set_attributes("species_mult", value=value, selected_labels=value)
+        frame.set_attributes("table_links", value="")
+    
     def get_table_handler(widget):
-        clear_output()
-        pyplot.close("all")
-
         iso_or_elem = frame.get_attribute("iso_or_elem", "value")
-        spieces = list(frame.get_attribute("spieces_mult", "value"))
+        species = list(frame.get_attribute("species_mult", "value"))
 
         runs = frame.get_state_data("runs")
         title = "<h3>Data table links:</h3>"
@@ -753,22 +761,24 @@ def start_SYGMA():
             if frame.get_attribute(widget_name, "value"):
                 file = "evol_tables/" + widget_name.replace("#", "") + ".txt"
                 if iso_or_elem == "Elements":
-                    data.write_evol_table(spieces, [], file, "./")
+                    data.write_evol_table(species, [], file, "./")
                 elif iso_or_elem == "Isotopes":
-                    data.write_evol_table([], spieces, file, "./")
-                html = html + "<p><a href=\"" + file + "\" target=\"_blank\">" + name + "</a></p>\n"
+                    data.write_evol_table([], species, file, "./")
+                html = html + "<p><a href=\"" + file + "\" target=\"_blank\" download>" + name + "</a></p>\n"
         
         if html == title:
             html = ""
             print("No runs selected.")
         
         frame.set_attributes("table_links", value=html)
+        clear_output()
+        pyplot.close("all")
         
-    
+    frame.set_state_callbacks("species_mult", species_mult_handler)
     frame.set_state_callbacks("get_table", get_table_handler, attribute=None, type="on_click")
 
-    frame.set_object("spieces_mult_group", widgets.VBox())
-    frame.set_object("spieces_mult", widgets.SelectMultiple())
+    frame.set_object("species_mult_group", widgets.VBox())
+    frame.set_object("species_mult", widgets.SelectMultiple())
     frame.set_object("get_table_page", widgets.VBox())
     frame.set_object("get_table", widgets.Button())
     frame.set_object("table_links", widgets.HTML())
