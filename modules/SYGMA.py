@@ -22,7 +22,12 @@ def start_SYGMA():
     frame.set_default_io_style(padding="0.25em", margin="0.25em", border_color="LightGrey", border_radius="0.5em")
     
     tablist = ["sim_page", "plot_page", "custom_imf_page", "get_table_page"]
-    yield_list = {"isotope_yield_table.txt":"yield_tables/isotope_yield_table.txt"}
+    yield_list = {"Default":"yield_tables/isotope_yield_table.txt",
+                  "Delay":"yield_tables/isotope_yield_table_MESA_only_fryer12_delay.txt",
+                  "Rapid":"yield_tables/isotope_yield_table_MESA_only_fryer12_rapid.txt",
+                  "Exclude neutron-alpha rich freeze-out":"yield_tables/isotope_yield_table_MESA_only_fryer12_exclnalpha.txt",
+                  "Fallback at Ye":"yield_tables/isotope_yield_table_MESA_only_ye.txt",
+                  "Fallback motivated by GCE":"yield_tables/isotope_yield_table_MESA_only_ye_fallback.txt"}
     group_style = {"border_style":"none", "border_radius":"0em"}
     text_box_style = {"width":"10em"}
     button_style = {"font_size":"1.25em", "font_weight":"bold"}
@@ -246,7 +251,7 @@ def start_SYGMA():
     
     frame.set_state_attribute('sn1a_group', visible=True, **group_style)
     frame.set_state_attribute('use_sn1a', visible=True, description="Include SNe Ia: ", value=True)
-    frame.set_state_attribute('yield_table_list', visible=True, description="Yield table:", options=yield_list)
+    frame.set_state_attribute('yield_table_list', visible=True, description="Yield table:", options=yield_list, selected_label="Default")
     frame.set_state_links("sn1a_link", [("use_sn1a", "value"), ("sn1a_rates", "visible")], directional=True)
     
     frame.set_state_attribute('sn1a_rates', description="SNe Ia rates: ", options=['Power law', 'Exponential', 'Gaussian'])
@@ -759,7 +764,7 @@ def start_SYGMA():
         
         for data, name, Z, widget_name in runs:
             if frame.get_attribute(widget_name, "value"):
-                file = "evol_tables/" + widget_name.replace("#", "") + ".txt"
+                file = "evol_tables/" + widget_name.replace("#", "") + "file"
                 if iso_or_elem == "Elements":
                     data.write_evol_table(species, [], file, "./")
                 elif iso_or_elem == "Isotopes":
