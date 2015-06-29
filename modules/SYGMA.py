@@ -142,6 +142,9 @@ def start_SYGMA():
     frame.add_display_object("sn1a_group")
     frame.add_io_object("use_sn1a")
     frame.add_io_object("sn1a_rates")
+    
+    frame.add_display_object("yield_table_group")
+    frame.add_io_object("yield_table_description")
     frame.add_io_object("yield_table_list")
 
     frame.add_display_object("run_sim_remove_run_group")
@@ -161,7 +164,8 @@ def start_SYGMA():
     frame.set_state_children("time_group", ["t_end", "dt"])
     frame.set_state_children("imf_type_group", ["imf_type", "imf_alpha"])
     frame.set_state_children("imf_mass_group", ["imf_mass_min", "imf_mass_max"])
-    frame.set_state_children("sn1a_group", ["use_sn1a", "sn1a_rates", "yield_table_list"])
+    frame.set_state_children("sn1a_group", ["use_sn1a", "sn1a_rates", "yield_table_group"])
+    frame.set_state_children("yield_table_group", ["yield_table_description", "yield_table_list"])
     frame.set_state_children("run_sim_remove_run_group", ["run_sim", "remove_run", "run_name"])
     
     frame.set_state_children("runs", ["runs_title"])
@@ -251,7 +255,9 @@ def start_SYGMA():
     
     frame.set_state_attribute('sn1a_group', visible=True, **group_style)
     frame.set_state_attribute('use_sn1a', visible=True, description="Include SNe Ia: ", value=True)
-    frame.set_state_attribute('yield_table_list', visible=True, description="Yield table:", options=yield_list, selected_label="Default")
+    frame.set_state_attribute("yield_table_group", visible=True, **group_style)
+    frame.set_state_attribute("yield_table_description", visible=True, value="<p>CCSN remnant prescription:</p>", **group_style)
+    frame.set_state_attribute('yield_table_list', visible=True, options=yield_list, selected_label="Default")
     frame.set_state_links("sn1a_link", [("use_sn1a", "value"), ("sn1a_rates", "visible")], directional=True)
     
     frame.set_state_attribute('sn1a_rates', description="SNe Ia rates: ", options=['Power law', 'Exponential', 'Gaussian'])
@@ -392,6 +398,9 @@ def start_SYGMA():
     frame.set_object("sn1a_group", widgets.HBox())
     frame.set_object("use_sn1a", widgets.Checkbox())
     frame.set_object("sn1a_rates", widgets.Dropdown())
+    
+    frame.set_object("yield_table_group", widgets.VBox())
+    frame.set_object("yield_table_description", widgets.HTML())
     frame.set_object("yield_table_list", widgets.Dropdown())
     
     frame.set_object("run_sim_remove_run_group", widgets.HBox())

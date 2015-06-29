@@ -6,7 +6,7 @@ from matplotlib import pyplot
 import os
 import ppm
 
-def start_PPM(local_dir="./"):
+def start_PPM(global_namespace, local_dir="./"):
     frame = framework.framework()
     frame.set_default_display_style(padding="0.25em",background_color="white", border_color="LightGrey", border_radius="0.5em")
     frame.set_default_io_style(padding="0.25em", margin="0.25em", border_color="LightGrey", border_radius="0.5em")        
@@ -16,7 +16,7 @@ def start_PPM(local_dir="./"):
     button_style = {"font_size":"1.25em", "font_weight":"bold"}
     first_tab_style = {"border_radius":"0em 0.5em 0.5em 0.5em"}
 
-    states_plotting = ["plot_prof_time", "plot_tEkmax"]
+    states_plotting = ["plot_prof_time", "plot_tEkmax", "plot_vprofs", "get"]
     states_loaded = ["data_loaded"] + states_plotting
     states = states_loaded
 
@@ -25,6 +25,9 @@ def start_PPM(local_dir="./"):
     frame.set_state_data("data_sets", [])
     frame.set_state_data("data_set_count", 0)
     frame.set_state_data("dir", os.path.abspath(local_dir))
+    frame.set_state_data("yaxis_options", [""], "plot_prof_time")
+    frame.set_state_data("yaxis_options", [""], "get")
+    frame.set_state_data("cycles", [])
     
     def add_data_set(data, name):
         data_set_count = frame.get_state_data("data_set_count")
@@ -63,7 +66,7 @@ def start_PPM(local_dir="./"):
         dir = frame.get_state_data("dir")
         dirs = [".", ".."] + os.listdir(dir)
         
-        frame.set_state_attribute("adress_bar", value=dir)
+        frame.set_state_attribute("address_bar", value=dir)
         frame.set_state_attribute("directory_list", options=dirs)
 
     frame.add_display_object("window")
@@ -78,7 +81,7 @@ def start_PPM(local_dir="./"):
     ##data page
     frame.add_display_object("data_page")
     frame.add_display_object("file_system_group")
-    frame.add_io_object("adress_bar")
+    frame.add_io_object("address_bar")
     frame.add_io_object("directory_list")
     
     frame.add_display_object("name_load_remove_group")
@@ -89,11 +92,15 @@ def start_PPM(local_dir="./"):
     ##plotting page
     frame.add_display_object("plotting_page")
     frame.add_io_object("select_plot")
+    frame.add_io_object("plot_title")
     frame.add_io_object("warning_msg")
     
     frame.add_display_object("cycle_range_group")
+    frame.add_io_object("cycle")
     frame.add_io_object("cycle_range")
     frame.add_io_object("cycle_sparsity")
+    
+    frame.add_io_object("variable_name")
     
     frame.add_display_object("yaxis_group")
     frame.add_io_object("yaxis")
@@ -107,11 +114,11 @@ def start_PPM(local_dir="./"):
     frame.set_state_children("data_sets", ["data_sets_title"])
     frame.set_state_children("widget", ["data_page", "plotting_page"], titles=["Data", "Plotting"])
     frame.set_state_children("data_page", ["file_system_group", "name_load_remove_group"])
-    frame.set_state_children("file_system_group", ["adress_bar", "directory_list"])
+    frame.set_state_children("file_system_group", ["address_bar", "directory_list"])
     frame.set_state_children("name_load_remove_group", ["data_set_load", "data_set_remove", "data_set_name"])
     
-    frame.set_state_children("plotting_page", ["select_plot", "warning_msg", "cycle_range_group", "yaxis_group", "plot"])
-    frame.set_state_children("cycle_range_group", ["cycle_range", "cycle_sparsity"])
+    frame.set_state_children("plotting_page", ["select_plot", "warning_msg", "plot_title", "variable_name", "cycle_range_group", "yaxis_group", "plot"])
+    frame.set_state_children("cycle_range_group", ["cycle", "cycle_range", "cycle_sparsity"])
     frame.set_state_children("yaxis_group", ["yaxis", "logy"])
     
     frame.set_state_attribute("window", visible=True, **group_style)
@@ -123,21 +130,21 @@ def start_PPM(local_dir="./"):
     
     frame.set_state_attribute("data_page", visible=True, **first_tab_style)
     frame.set_state_attribute("file_system_group", visible=True, **group_style)
-    frame.set_state_attribute("adress_bar", visible=True)
+    frame.set_state_attribute("address_bar", visible=True)
     frame.set_state_attribute("directory_list", visible=True)
     frame.set_state_attribute("name_load_remove_group", visible=True, **group_style)
     frame.set_state_attribute("data_set_name", visible=True, description="Data set name:", placeholder="Enter name", **text_box_style)
     frame.set_state_attribute("data_set_load", visible=True, description="Load data set", **button_style)
     frame.set_state_attribute("data_set_remove", visible=True, description="Remove data set", **button_style)    
 
-    def adress_bar_handler(widget):
-        dir = frame.get_attribute("adress_bar", "value")
+    def address_bar_handler(widget):
+        dir = frame.get_attribute("address_bar", "value")
         if os.path.isdir(dir):
             dir = os.path.abspath(dir)
             frame.set_state_data("dir", dir)
             update_dir_bar_list()
             frame.update()
-            frame.set_attributes("adress_bar", value=dir)
+            frame.set_attributes("address_bar", value=dir)
             frame.set_attributes("directory_list", value=".", selected_label=u".")
 
     def directory_list_handler(name, value):
@@ -148,14 +155,14 @@ def start_PPM(local_dir="./"):
             frame.set_state_data("dir", dir)
             update_dir_bar_list()
             frame.update()
-            frame.set_attributes("adress_bar", value=dir)
+            frame.set_attributes("address_bar", value=dir)
             frame.set_attributes("directory_list", value=".", selected_label=u".")
 
     def data_set_load_handler(widget):
         clear_output()
         pyplot.close("all")
         
-        dir = frame.get_attribute("adress_bar", "value")
+        dir = frame.get_attribute("address_bar", "value")
         data_set_count = frame.get_state_data("data_set_count")
         name = frame.get_attribute("data_set_name", "value")
         if name == "":
@@ -164,11 +171,15 @@ def start_PPM(local_dir="./"):
         data = ppm.yprofile(dir)
         frame.set_state("data_loaded")
         
-        frame.set_attributes("select_plot", selected_label="tEkmax", value="tEkmax")
-        frame.set_attributes("select_plot", selected_label="prof_time", value="prof_time")
-        
+        old_cycs = frame.get_state_data("cycles")
         cycs = data.cycles
-        frame.set_state_attribute("yaxis", options=data.dcols)
+        cycs = list(set(cycs) | set(old_cycs))
+        cycs.sort()
+        frame.set_state_data("cycles", cycs)
+        frame.set_state_data("yaxis_options", data.dcols, "plot_prof_time")
+        frame.set_state_data("yaxis_options", data.dcols + data.cattrs, "get")
+
+        frame.set_state_attribute("cycle", min=cycs[0], max=cycs[-1], value=cycs[-1])
         frame.set_state_attribute("cycle_range", min=cycs[0], max=cycs[-1], value=(cycs[0], cycs[-1]))
 
         add_data_set(data, name)
@@ -179,7 +190,7 @@ def start_PPM(local_dir="./"):
         remove_data_set()
         frame.update()
         
-    frame.set_state_callbacks("adress_bar", adress_bar_handler, attribute=None, type="on_submit")
+    frame.set_state_callbacks("address_bar", address_bar_handler, attribute=None, type="on_submit")
     frame.set_state_callbacks("directory_list", directory_list_handler)
     frame.set_state_callbacks("data_set_load", data_set_load_handler, attribute=None, type="on_click")
     frame.set_state_callbacks("data_set_remove", data_set_remove_handler, attribute=None, type="on_click")
@@ -192,11 +203,10 @@ def start_PPM(local_dir="./"):
     frame.set_object("data_sets", widgets.VBox())
     frame.set_object("data_sets_title", widgets.HTML())
 
-
     frame.set_object("data_page", widgets.VBox())
 
     frame.set_object("file_system_group", widgets.VBox())
-    frame.set_object("adress_bar", widgets.Text())
+    frame.set_object("address_bar", widgets.Text())
     frame.set_object("directory_list", widgets.Select())
 
     frame.set_object("name_load_remove_group", widgets.HBox())
@@ -206,25 +216,54 @@ def start_PPM(local_dir="./"):
 
 
     frame.set_state_attribute("plotting_page", visible=True)
-    frame.set_state_attribute("select_plot", states_loaded, visible=True, options=["prof_time", "tEkmax"])
+    frame.set_state_attribute("select_plot", states_loaded, visible=True, options={"":"data_loaded", "Profile time":"plot_prof_time", "Velocity Profile":"plot_vprofs", "tEkmax":"plot_tEkmax", "Get Data":"get"})
     frame.set_state_attribute("warning_msg", visible=True, value="<h3>No data sets loaded!</h3>", **group_style)
-    frame.set_state_attribute("warning_msg", states_loaded, visible=False)
+    frame.set_state_attribute("warning_msg", "data_loaded", value="<h3>Select plot.</h3>")
+    frame.set_state_attribute("warning_msg", states_plotting, visible=False)
+    frame.set_state_attribute("plot_title", visible=False, **group_style)
+    frame.set_state_attribute("plot_title", "plot_prof_time", visible=True, value="<h3>Prof_time</h3>")
+    frame.set_state_attribute("plot_title", "plot_vprofs", visible=True, value="<h3>Plot Velocity Profiles</h3>")
+    frame.set_state_attribute("plot_title", "plot_tEkmax", visible=True, value="<h3>tEkmax</h3>")
+    frame.set_state_attribute("plot_title", "get", visible=True, value="<h3>Get Data</h3>")
     
-    frame.set_state_attribute("cycle_range_group", "plot_prof_time", visible=True, **group_style)
-    frame.set_state_attribute("cycle_range", visible=True, description="Cycle range:")
-    frame.set_state_attribute("cycle_sparsity", visible=True, description="Cycle sparsity", value=1)
+    frame.set_state_attribute("variable_name", "get", visible=True, description="Variable name:", placeholder="Enter name.", **text_box_style)
     
-    frame.set_state_attribute("yaxis_group", "plot_prof_time", visible=True, **group_style)
-    frame.set_state_attribute("yaxis", visible=True, description="Yaxis:", options=["vXZ", "A"])
-    frame.set_state_attribute("logy", visible=True, description="Log Y axis:")
+    frame.set_state_attribute("cycle_range_group", ["plot_prof_time", "plot_vprofs", "get"], visible=True, **group_style)
+    frame.set_state_attribute("cycle", "get", visible=True, description="Cycle:")
+    frame.set_state_attribute("cycle_range", ["plot_prof_time", "plot_vprofs"], visible=True, description="Cycle range:")
+    frame.set_state_attribute("cycle_sparsity", ["plot_prof_time", "plot_vprofs"], visible=True, description="Cycle sparsity", value=1)
     
-    frame.set_state_attribute("plot", states_loaded, visible=True, description="Plot", **button_style)
+    frame.set_state_attribute("yaxis_group", ["plot_prof_time", "plot_vprofs", "get"], visible=True, **group_style)
+    frame.set_state_attribute("yaxis", ["plot_prof_time", "get"], visible=True, description="Yaxis:", options=[""])
+    frame.set_state_attribute("logy", ["plot_prof_time", "plot_vprofs"],visible=True, description="Log Y axis:")
+    
+    frame.set_state_attribute("plot", states_loaded, visible=True, description="Generate Plot", **button_style)
+    frame.set_state_attribute("plot", "get", description="Get Data")
+    
+    def variable_name_full_validation(value):
+        frame.set_attributes("variable_name", value=token_text(value, strict=True))
+        frame.set_state_data("variable_name_timer", None)
+        
+    def variable_name_handler(name, value):
+        value = token_text(value)
+        frame.set_attributes("variable_name", value=value)
+        
+        timer = frame.get_state_data("variable_name_timer")
+        if (value != token_text(value, strict=True)):
+            if timer != None:
+                timer.cancel()
+            timer = threading.Timer(1.0, variable_name_full+validation, kwargs={"value":value})
+            timer.start()
+        else:
+            if timer != None:
+                timer.cancel()
+            timer = None
+        frame.set_state_data("variable_name_timer", timer)
 
     def select_plot_handler(name, value):
-        if value == "prof_time":
-            frame.set_state("plot_prof_time")
-        if value == "tEkmax":
-            frame.set_state("plot_tEkmax")
+        if value in ["plot_prof_time", "get"]:
+            frame.set_state_attribute("yaxis", value, options=frame.get_state_data("yaxis_options", value))
+        frame.set_state(value)
             
     def plot_handler(widget):
         clear_output()
@@ -232,10 +271,12 @@ def start_PPM(local_dir="./"):
         
         state = frame.get_state()
         data_sets = frame.get_state_data("data_sets")
-        
+                
+        cycle = frame.get_attribute("cycle", "value")
         cycle_min, cycle_max = frame.get_attribute("cycle_range", "value")
         cycle_sparsity = int(frame.get_attribute("cycle_sparsity", "value"))
-        cycles = range(cycle_min, cycle_max, cycle_sparsity)
+        if state in ["plot_prof_time", "plot_vprofs"]:
+            cycles = range(cycle_min, cycle_max, cycle_sparsity)
         
         yaxis = frame.get_attribute("yaxis", "value")
         logy = frame.get_attribute("logy", "value")
@@ -245,13 +286,31 @@ def start_PPM(local_dir="./"):
         if state == "plot_prof_time":
             for data, name, widget_name in data_sets:
                 if frame.get_attribute(widget_name, "value"):
+                    cycs = data.cycles
+                    cycs = list(set(cycs) & set(cycles))
+                    cycs.sort()
                     no_runs = False
-                    data.prof_time(cycles, yaxis_thing=yaxis, logy=logy)
+                    data.prof_time(cycs, yaxis_thing=yaxis, logy=logy)
+        elif state == "plot_vprofs":
+            for data, name, widget_name in data_sets:
+                if frame.get_attribute(widget_name, "value"):
+                    cycs = data.cycles
+                    cycs = list(set(cycs) & set(cycles))
+                    cycs.sort()
+                    no_runs = False
+                    data.vprofs(cycs, log_logic=logy)
         elif state == "plot_tEkmax":
+            i = 0
             for data, name, widget_name in data_sets:
                 if frame.get_attribute(widget_name, "value"):
                     no_runs = False
-                    data.tEkmax()
+                    data.tEkmax(ifig=1, label=name, id=i)
+                    i += 1
+        elif state == "get":
+            for data, name, widget_name in data_sets:
+                if frame.get_attribute(widget_name, "value"):
+                    no_runs = False
+                    global_namespace["test"]  = data.get(attri=yaxis, fname=cycle)
         
         if no_runs:
             print "No data sets selected."
@@ -262,7 +321,9 @@ def start_PPM(local_dir="./"):
     frame.set_object("plotting_page", widgets.VBox())
     frame.set_object("select_plot", widgets.Dropdown())
     frame.set_object("warning_msg", widgets.HTML())
+    frame.set_object("plot_title", widgets.HTML())
     frame.set_object("cycle_range_group", widgets.HBox())
+    frame.set_object("cycle", widgets.IntSlider())
     frame.set_object("cycle_range", widgets.IntRangeSlider())
     frame.set_object("cycle_sparsity", widgets.IntText())
     

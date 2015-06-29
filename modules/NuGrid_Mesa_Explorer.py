@@ -63,7 +63,7 @@ def start_explorer(global_namespace):
     frame.add_display_object("cycle_sparsity_group")
     frame.add_io_object("cycle")
     frame.add_io_object("cycle_range")
-    frame.add_io_object("sparisty")
+    frame.add_io_object("sparsity")
 
     frame.add_io_object("movie_type")
 
@@ -284,7 +284,7 @@ def start_explorer(global_namespace):
     frame.set_state_attribute('cycle_sparsity_group', states_nugrid[1:] + states_mesa[1:] + states_movie, visible=True, **group_style)
     frame.set_state_attribute('cycle', ["iso_abund", "abu_chart", "nugrid_plot", "nugrid_get_data"], visible=True, description="cycle: ")
     frame.set_state_attribute('cycle_range', states_movie[1:], visible=True)
-    frame.set_state_attribute('sparsity', states_movie[1:], visible=True, description="Sparsity: ", value="20")
+    frame.set_state_attribute('sparsity', states_movie[1:], visible=True, description="Sparsity: ", value="1", **text_box_style)
 
     frame.set_state_attribute('xax', ["plot", "nugrid_plot", "get_data", "nugrid_get_data"], visible=True, **group_style)
     frame.set_state_attribute('xaxis', visible=True, description="select X-axis: ")
@@ -428,6 +428,7 @@ def start_explorer(global_namespace):
         variable_name = frame.get_attribute("variable_name", "value")
         cycle = frame.get_attribute("cycle", "value")
         cycle_range = frame.get_attribute("cycle_range", "value")
+        sparsity = int(frame.get_attribute("sparsity", "value"))
         xax = frame.get_attribute("xaxis", "value")
         logx = frame.get_attribute("logx", "value")
         yax = frame.get_attribute("yaxis", "value")
@@ -512,13 +513,13 @@ def start_explorer(global_namespace):
             cycles = data.se.cycles
             cyc_min = cycles.index("%010d" % (cycle_range[0], ))
             cyc_max = cycles.index("%010d" % (cycle_range[1], ))
-            cycles = cycles[cyc_min:cyc_max]
+            cycles = cycles[cyc_min:cyc_max:sparsity]
             display(data.movie(cycles, "iso_abund", amass_range=amass, mass_range=mass, ylim=ylim))
         elif state=="movie_abu_chart":
             cycles = data.se.cycles
             cyc_min = cycles.index("%010d" % (cycle_range[0], ))
             cyc_max = cycles.index("%010d" % (cycle_range[1], ))
-            cycles = cycles[cyc_min:cyc_max]
+            cycles = cycles[cyc_min:cyc_max:sparsity]
             plotaxis = [xlim[0], xlim[1], ylim[0], ylim[1]]
             display(data.movie(cycles, "abu_chart", mass_range=mass, ilabel=ilabel, imlabel=imlabel, imagic=imagic, plotaxis=plotaxis))
         elif state=="get_data":
