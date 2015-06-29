@@ -1,5 +1,6 @@
+import threading
 import widget_framework as framework
-#from widget_utils import int_text, token_text
+from widget_utils import int_text, token_text
 from IPython.html import widgets
 from IPython.display import display, clear_output
 from matplotlib import pyplot
@@ -28,6 +29,7 @@ def start_PPM(global_namespace, local_dir="./"):
     frame.set_state_data("yaxis_options", [""], "plot_prof_time")
     frame.set_state_data("yaxis_options", [""], "get")
     frame.set_state_data("cycles", [])
+    frame.set_state_data("variable_name_timer", None)
     
     def add_data_set(data, name):
         data_set_count = frame.get_state_data("data_set_count")
@@ -169,21 +171,22 @@ def start_PPM(global_namespace, local_dir="./"):
             name = "Data set - " + "%03d" % (data_set_count + 1, )
             
         data = ppm.yprofile(dir)
-        frame.set_state("data_loaded")
+        if data.files != []:
+            frame.set_state("data_loaded")
         
-        old_cycs = frame.get_state_data("cycles")
-        cycs = data.cycles
-        cycs = list(set(cycs) | set(old_cycs))
-        cycs.sort()
-        frame.set_state_data("cycles", cycs)
-        frame.set_state_data("yaxis_options", data.dcols, "plot_prof_time")
-        frame.set_state_data("yaxis_options", data.dcols + data.cattrs, "get")
+            old_cycs = frame.get_state_data("cycles")
+            cycs = data.cycles
+            cycs = list(set(cycs) | set(old_cycs))
+            cycs.sort()
+            frame.set_state_data("cycles", cycs)
+            frame.set_state_data("yaxis_options", data.dcols, "plot_prof_time")
+            frame.set_state_data("yaxis_options", data.dcols + data.cattrs, "get")
 
-        frame.set_state_attribute("cycle", min=cycs[0], max=cycs[-1], value=cycs[-1])
-        frame.set_state_attribute("cycle_range", min=cycs[0], max=cycs[-1], value=(cycs[0], cycs[-1]))
-
-        add_data_set(data, name)
-        frame.update()
+            frame.set_state_attribute("cycle", min=cycs[0], max=cycs[-1], value=cycs[-1])
+            frame.set_state_attribute("cycle_range", min=cycs[0], max=cycs[-1], value=(cycs[0], cycs[-1]))
+   
+            add_data_set(data, name)
+            frame.update()
         
         
     def data_set_remove_handler(widget):
@@ -252,7 +255,7 @@ def start_PPM(global_namespace, local_dir="./"):
         if (value != token_text(value, strict=True)):
             if timer != None:
                 timer.cancel()
-            timer = threading.Timer(1.0, variable_name_full+validation, kwargs={"value":value})
+            timer = threading.Timer(1.0, variable_name_full_validation, kwargs={"value":value})
             timer.start()
         else:
             if timer != None:
@@ -264,7 +267,7 @@ def start_PPM(global_namespace, local_dir="./"):
         if value in ["plot_prof_time", "get"]:
             frame.set_state_attribute("yaxis", value, options=frame.get_state_data("yaxis_options", value))
         frame.set_state(value)
-            
+        
     def plot_handler(widget):
         clear_output()
         pyplot.close("all")
@@ -272,6 +275,7 @@ def start_PPM(global_namespace, local_dir="./"):
         state = frame.get_state()
         data_sets = frame.get_state_data("data_sets")
                 
+        variable_name = frame.get_attribute("variable_name", "value")
         cycle = frame.get_attribute("cycle", "value")
         cycle_min, cycle_max = frame.get_attribute("cycle_range", "value")
         cycle_sparsity = int(frame.get_attribute("cycle_sparsity", "value"))
@@ -307,14 +311,34 @@ def start_PPM(global_namespace, local_dir="./"):
                     data.tEkmax(ifig=1, label=name, id=i)
                     i += 1
         elif state == "get":
+            data_out = []
+            i = 0
             for data, name, widget_name in data_sets:
                 if frame.get_attribute(widget_name, "value"):
-                    no_runs = False
-                    global_namespace["test"]  = data.get(attri=yaxis, fname=cycle)
+                    if cycle in data.cycles:
+                        i += 1
+                        no_runs = False
+                        if yaxis in data.cattrs:
+                            data_out.append(data.get(attri=yaxis))
+                        else:
+                            data_out.append(data.get(attri=yaxis, fname=cycle))
+                    else:
+                        print("cycle out of range for " + name)
+            if data_out != []:
+                if i == 1:
+                    data_out = data_out[0]
+
+                if variable_name == "":
+                    print("No variable name.")
+                else:
+                    global_namespace[variable_name] = data_out
+                    print("\nThe selected data is now loaded into the global namespace under the variable name \"" + variable_name + "\".")
         
         if no_runs:
             print "No data sets selected."
     
+    
+    frame.set_state_callbacks("variable_name", variable_name_handler)
     frame.set_state_callbacks("select_plot", select_plot_handler)
     frame.set_state_callbacks("plot", plot_handler, attribute=None, type="on_click")
     
@@ -322,6 +346,7 @@ def start_PPM(global_namespace, local_dir="./"):
     frame.set_object("select_plot", widgets.Dropdown())
     frame.set_object("warning_msg", widgets.HTML())
     frame.set_object("plot_title", widgets.HTML())
+    frame.set_object("variable_name", widgets.Text())
     frame.set_object("cycle_range_group", widgets.HBox())
     frame.set_object("cycle", widgets.IntSlider())
     frame.set_object("cycle_range", widgets.IntRangeSlider())
