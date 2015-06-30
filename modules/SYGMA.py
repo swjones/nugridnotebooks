@@ -22,12 +22,11 @@ def start_SYGMA():
     frame.set_default_io_style(padding="0.25em", margin="0.25em", border_color="LightGrey", border_radius="0.5em")
     
     tablist = ["sim_page", "plot_page", "custom_imf_page", "get_table_page"]
-    yield_list = {"Default":"yield_tables/isotope_yield_table.txt",
-                  "Delay":"yield_tables/isotope_yield_table_MESA_only_fryer12_delay.txt",
+    yield_list = {"Analytic perscription":{"Delay":"yield_tables/isotope_yield_table_MESA_only_fryer12_delay.txt",
                   "Rapid":"yield_tables/isotope_yield_table_MESA_only_fryer12_rapid.txt",
-                  "Exclude neutron-alpha rich freeze-out":"yield_tables/isotope_yield_table_MESA_only_fryer12_exclnalpha.txt",
-                  "Fallback at Ye":"yield_tables/isotope_yield_table_MESA_only_ye.txt",
-                  "Fallback motivated by GCE":"yield_tables/isotope_yield_table_MESA_only_ye_fallback.txt"}
+                  "Exclude neutron-alpha rich freeze-out":"yield_tables/isotope_yield_table_MESA_only_fryer12_exclnalpha.txt"}, 
+                  "Ye=0.4982":{"Fallback at Ye":"yield_tables/isotope_yield_table_MESA_only_ye.txt",
+                  "Fallback motivated by GCE":"yield_tables/isotope_yield_table_MESA_only_ye_fallback.txt"}}
     group_style = {"border_style":"none", "border_radius":"0em"}
     text_box_style = {"width":"10em"}
     button_style = {"font_size":"1.25em", "font_weight":"bold"}
@@ -144,7 +143,7 @@ def start_SYGMA():
     frame.add_io_object("sn1a_rates")
     
     frame.add_display_object("yield_table_group")
-    frame.add_io_object("yield_table_description")
+    frame.add_io_object("yield_table_selection")
     frame.add_io_object("yield_table_list")
 
     frame.add_display_object("run_sim_remove_run_group")
@@ -159,13 +158,13 @@ def start_SYGMA():
     frame.set_state_children("widget_runs_group", ["widget", "runs"])
 
     frame.set_state_children("widget", ["sim_page"], titles=["Simulation"])
-    frame.set_state_children("sim_page", ["mass_Z_group", "time_group", "imf_type_group", "imf_mass_group", "sn1a_group", "run_sim_remove_run_group", "sim_responce"])
+    frame.set_state_children("sim_page", ["mass_Z_group", "time_group", "imf_type_group", "imf_mass_group", "sn1a_group", "yield_table_group", "run_sim_remove_run_group", "sim_responce"])
     frame.set_state_children("mass_Z_group", ["mass_gas", "init_Z"])
     frame.set_state_children("time_group", ["t_end", "dt"])
     frame.set_state_children("imf_type_group", ["imf_type", "imf_alpha"])
     frame.set_state_children("imf_mass_group", ["imf_mass_min", "imf_mass_max"])
-    frame.set_state_children("sn1a_group", ["use_sn1a", "sn1a_rates", "yield_table_group"])
-    frame.set_state_children("yield_table_group", ["yield_table_description", "yield_table_list"])
+    frame.set_state_children("sn1a_group", ["use_sn1a", "sn1a_rates"])
+    frame.set_state_children("yield_table_group", ["yield_table_selection", "yield_table_list"])
     frame.set_state_children("run_sim_remove_run_group", ["run_sim", "remove_run", "run_name"])
     
     frame.set_state_children("runs", ["runs_title"])
@@ -256,8 +255,8 @@ def start_SYGMA():
     frame.set_state_attribute('sn1a_group', visible=True, **group_style)
     frame.set_state_attribute('use_sn1a', visible=True, description="Include SNe Ia: ", value=True)
     frame.set_state_attribute("yield_table_group", visible=True, **group_style)
-    frame.set_state_attribute("yield_table_description", visible=True, value="<p>CCSN remnant prescription:</p>", **group_style)
-    frame.set_state_attribute('yield_table_list', visible=True, options=yield_list, selected_label="Default")
+    frame.set_state_attribute("yield_table_selection", visible=True, description="CCSN remnant prescription:", options=["Analytic perscription", "Ye=0.4982"], value="Ye=0.4982")
+    frame.set_state_attribute('yield_table_list', visible=True, options=yield_list["Ye=0.4982"], selected_label="Fallback at Ye")
     frame.set_state_links("sn1a_link", [("use_sn1a", "value"), ("sn1a_rates", "visible")], directional=True)
     
     frame.set_state_attribute('sn1a_rates', description="SNe Ia rates: ", options=['Power law', 'Exponential', 'Gaussian'])
@@ -265,7 +264,7 @@ def start_SYGMA():
     frame.set_state_attribute("run_sim_remove_run_group", visible=True, **group_style)
     frame.set_state_attribute('run_sim', visible=True, description="Run simulation", **button_style)
     frame.set_state_attribute("remove_run", visible=True, description="Remove selected", **button_style)
-    frame.set_state_attribute("run_name", visible=True, description="Run name: ", placeholder="Enter name", **text_box_style)
+    frame.set_state_attribute("run_name", visible=True, description="Run name: ", placeholder="Enter name", value="", **text_box_style)
     
     frame.set_state_attribute("sim_responce", value="<p>Simulation data loaded.</p>", **group_style)
     frame.set_state_attribute("sim_responce", states_sim_plot, visible=True)
@@ -294,6 +293,13 @@ def start_SYGMA():
         else:
             frame.set_state_attribute("imf_alpha", visible=False)
             frame.set_attributes("imf_alpha", visible=False)
+            
+    def yield_table_selection_handler(name, value):
+        frame.set_attributes("yield_table_list", options=yield_list[value])
+        if value == "Analytic perscription":
+            frame.set_attributes("yield_table_list", selected_label="Delay")
+        elif value == "Ye=0.4982":
+            frame.set_attributes("yield_table_list", selected_label="Fallback at Ye")        
     
     def run_simulation(widget):
         frame.set_attributes("sim_responce", visible=False)
@@ -363,9 +369,10 @@ def start_SYGMA():
     frame.set_state_callbacks("mass_gas", mass_gas_handler)        
     frame.set_state_callbacks("t_end", t_end_handler)        
     frame.set_state_callbacks("dt", dt_handler)        
-    frame.set_state_callbacks("imf_mass_min", imf_mass_min_handler)        
-    frame.set_state_callbacks("imf_mass_max", imf_mass_max_handler)        
+    frame.set_state_callbacks("imf_mass_min", imf_mass_min_handler)
+    frame.set_state_callbacks("imf_mass_max", imf_mass_max_handler)
     frame.set_state_callbacks("imf_type", sel_imf_type)
+    frame.set_state_callbacks("yield_table_selection", yield_table_selection_handler)
     frame.set_state_callbacks("run_sim", run_simulation, attribute=None, type="on_click")
     frame.set_state_callbacks("remove_run", remove_simulation, attribute=None, type="on_click")
     frame.set_state_callbacks("widget", sel_tab, "selected_index")
@@ -399,8 +406,8 @@ def start_SYGMA():
     frame.set_object("use_sn1a", widgets.Checkbox())
     frame.set_object("sn1a_rates", widgets.Dropdown())
     
-    frame.set_object("yield_table_group", widgets.VBox())
-    frame.set_object("yield_table_description", widgets.HTML())
+    frame.set_object("yield_table_group", widgets.HBox())
+    frame.set_object("yield_table_selection", widgets.ToggleButtons())
     frame.set_object("yield_table_list", widgets.Dropdown())
     
     frame.set_object("run_sim_remove_run_group", widgets.HBox())
