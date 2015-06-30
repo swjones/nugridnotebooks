@@ -6,8 +6,9 @@ from IPython.display import display, clear_output
 from matplotlib import pyplot
 import nugridse as mp
 import mesa as ms
+import os
 
-def start_explorer(global_namespace):
+def start_explorer(global_namespace, manual_data_select=False, dir="./"):
     frame = framework.framework()
     frame.set_default_display_style(padding="0.25em",background_color="white", border_color="LightGrey", border_radius="0.5em")
     frame.set_default_io_style(padding="0.25em", margin="0.25em", border_color="LightGrey", border_radius="0.5em")
@@ -22,11 +23,19 @@ def start_explorer(global_namespace):
     states_mesa = ["mesa", "mesa_w_data", "get_data", "hrd", "plot", "kip_cont", "kippenhahn", "tcrhoc"]
     states_plotting = states_nugrid[3:]+states_mesa[3:]
 
-    frame.set_state_data("model_data", (None, None, None))
-    frame.set_state_data("variable_name_timer", None)
-
     frame.add_state(states_nugrid)
     frame.add_state(states_mesa)
+
+    frame.set_state_data("model_data", (None, None, None))
+    frame.set_state_data("variable_name_timer", None)
+    frame.set_state_data("dir", os.path.abspath(dir))
+
+    def update_dir_bar_list():
+        dir = frame.get_state_data("dir")
+        dirs = [".", ".."] + os.listdir(dir)
+        
+        frame.set_state_attribute("address_bar", value=dir)
+        frame.set_state_attribute("directory_list", options=dirs)
 
     frame.add_display_object("window")
     frame.add_io_object("Title")
@@ -37,6 +46,8 @@ def start_explorer(global_namespace):
     frame.add_io_object("mass")
     frame.add_io_object("Z")
     frame.add_io_object("select_nugrid_mesa")
+    frame.add_io_object("address_bar")
+    frame.add_io_object("directory_list")
 
     frame.add_display_object("contain_module_load")
     frame.add_io_object("select_module")
@@ -46,7 +57,7 @@ def start_explorer(global_namespace):
 
     frame.set_state_children("window", ["Title", "widget"])
     frame.set_state_children("widget", ["page_data"], titles=["Data"])
-    frame.set_state_children("page_data", ["mass", "Z", "select_nugrid_mesa",
+    frame.set_state_children("page_data", ["mass", "Z", "address_bar", "directory_list", "select_nugrid_mesa",
                                            "contain_module_load"])
     frame.set_state_children("contain_module_load", ["select_module", "contain_model_select", "load_data"])
     frame.set_state_children("contain_model_select", ["model_select"])
@@ -129,8 +140,10 @@ def start_explorer(global_namespace):
     frame.set_state_attribute('widget', visible=True, **group_style)
 
     frame.set_state_attribute("page_data", visible=True, **first_tab_style)
-    frame.set_state_attribute('mass', visible=True, description="Mass: ", options=["1.0", "1.65", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "12.0", "15.0", "20.0", "25.0", "32.0", "60.0"], selected_label="2.0")
-    frame.set_state_attribute('Z', visible=True, description="Z: ", options=["1E-4", "1E-3", "6E-3", "1E-2", "2E-2"])
+    frame.set_state_attribute('mass', visible=not manual_data_select, description="Mass: ", options=["1.0", "1.65", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "12.0", "15.0", "20.0", "25.0", "32.0", "60.0"], selected_label="2.0")
+    frame.set_state_attribute('Z', visible=not manual_data_select, description="Z: ", options=["1E-4", "1E-3", "6E-3", "1E-2", "2E-2"])
+    frame.set_state_attribute("address_bar", visible=manual_data_select)
+    frame.set_state_attribute("directory_list", visible=manual_data_select)
     frame.set_state_attribute("select_nugrid_mesa", visible=True, description="Select NuGrid or Mesa: ", options=["", "NuGrid", "Mesa"])
     frame.set_state_attribute("contain_module_load", visible=True, **group_style)
     frame.set_state_attribute("select_module", visible=True, description="Select data type: ", disabled=True)
@@ -162,6 +175,27 @@ def start_explorer(global_namespace):
                 pre_data = ms.mesa_profile(mass=mass, Z=Z)
                 frame.set_state_data("model_data", (mass, Z, pre_data.model))
 
+    def address_bar_handler(widget):
+        dir = frame.get_attribute("address_bar", "value")
+        if os.path.isdir(dir):
+            dir = os.path.abspath(dir)
+            frame.set_state_data("dir", dir)
+            update_dir_bar_list()
+            frame.update()
+            frame.set_attributes("address_bar", value=dir)
+            frame.set_attributes("directory_list", value=".", selected_label=u".")
+
+    def directory_list_handler(name, value):
+        dir = frame.get_state_data("dir")
+        dir = dir + "/" + frame.get_attribute("directory_list", "value")
+        if os.path.isdir(dir):
+            dir = os.path.abspath(dir)
+            frame.set_state_data("dir", dir)
+            update_dir_bar_list()
+            frame.update()
+            frame.set_attributes("address_bar", value=dir)
+            frame.set_attributes("directory_list", value=".", selected_label=u".")
+
     def sel_nugrid_mesa(name, value):
         if value=="NuGrid":
             frame.set_state("nugrid")
@@ -175,19 +209,26 @@ def start_explorer(global_namespace):
         data = None
         mass = float(frame.get_attribute("mass", "value"))
         Z = float(frame.get_attribute("Z", "value"))
+        dir = frame.get_attribute("address_bar", "value")
         if frame.get_attribute("model_select", "value") != "":
             model = int(frame.get_attribute("model_select", "value"))
         else:
             model = 1
         module = frame.get_attribute("select_module", "value")
         if module == "H5 out":
-            data = mp.se(mass=mass, Z=Z)
+            if manual_data_select:
+                data = mp.se(dir)
+            else:
+                data = mp.se(mass=mass, Z=Z)
             frame.set_state("nugrid_w_data")
             properties = ["mass", "radius", "rho", "temperature"]
             frame.set_attributes("xaxis", options=properties+data.se.isotopes)
             frame.set_attributes("yaxis", options=properties+data.se.isotopes)
         elif module == "History":
-            data = ms.history_data(mass=mass, Z=Z)
+            if manual_data_select:
+                data = ms.history_data(dir)
+            else:
+                data = ms.history_data(mass=mass, Z=Z)
             frame.set_state("mesa_w_data")
             frame.set_attributes("xaxis", options=sorted(data.cols.keys()))
             frame.set_attributes("yaxis", options=sorted(data.cols.keys()))
@@ -236,6 +277,8 @@ def start_explorer(global_namespace):
     frame.set_state_callbacks("model_select", model_select_handler)
     frame.set_state_callbacks("mass", mass_Z_handler)
     frame.set_state_callbacks("Z", mass_Z_handler)
+    frame.set_state_callbacks("address_bar", address_bar_handler, attribute=None, type="on_submit")
+    frame.set_state_callbacks("directory_list", directory_list_handler)
     frame.set_state_callbacks("select_nugrid_mesa", sel_nugrid_mesa)
     frame.set_state_callbacks("select_module", change_module)
     frame.set_state_callbacks("load_data", load, attribute=None, type="on_click")
@@ -247,6 +290,8 @@ def start_explorer(global_namespace):
     frame.set_object("page_data", widgets.VBox())
     frame.set_object("mass", widgets.Dropdown())
     frame.set_object("Z", widgets.ToggleButtons())
+    frame.set_object("address_bar", widgets.Text())
+    frame.set_object("directory_list", widgets.Select())
 
     frame.set_object("select_nugrid_mesa", widgets.Dropdown())
     frame.set_object("contain_module_load", widgets.HBox())
@@ -428,7 +473,8 @@ def start_explorer(global_namespace):
         variable_name = frame.get_attribute("variable_name", "value")
         cycle = frame.get_attribute("cycle", "value")
         cycle_range = frame.get_attribute("cycle_range", "value")
-        sparsity = int(frame.get_attribute("sparsity", "value"))
+        if state in states_movie:
+            sparsity = int(frame.get_attribute("sparsity", "value"))
         xax = frame.get_attribute("xaxis", "value")
         logx = frame.get_attribute("logx", "value")
         yax = frame.get_attribute("yaxis", "value")
@@ -590,5 +636,6 @@ def start_explorer(global_namespace):
     frame.set_object("plot_engplus", widgets.Checkbox())
 
     frame.set_object("generate_plot", widgets.Button())
-
+    
+    update_dir_bar_list()
     frame.display_object("window")
