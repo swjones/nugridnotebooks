@@ -25,8 +25,10 @@ def start_explorer(global_namespace, manual_data_select=False, dir="./"):
 
     frame.add_state(states_nugrid)
     frame.add_state(states_mesa)
-
-    frame.set_state_data("model_data", (None, None, None))
+    if manual_data_select:
+        frame.set_state_data("model_data", (None, None))
+    else:
+        frame.set_state_data("model_data", (None, None, None))
     frame.set_state_data("variable_name_timer", None)
     frame.set_state_data("dir", os.path.abspath(dir))
 
@@ -169,11 +171,19 @@ def start_explorer(global_namespace, manual_data_select=False, dir="./"):
         if frame.get_attribute("contain_model_select", "visible"):
             mass = float(frame.get_attribute("mass", "value"))
             Z = float(frame.get_attribute("Z", "value"))
-            mmass, mZ, mmodel = frame.get_state_data("model_data")
-            if (mmass != mass) or (mZ != Z) or (mmodel == None):
-                clear_output()
-                pre_data = ms.mesa_profile(mass=mass, Z=Z)
-                frame.set_state_data("model_data", (mass, Z, pre_data.model))
+            dir = frame.get_attribute("address_bar", "value")
+            if manual_data_select:
+                mdir, mmodel = frame.get_state_data("model_data")
+                if (mdir != dir) or (mmodel == None):
+                    clear_output()
+                    pre_data = ms.mesa_profile(dir)
+                    frame.set_state_data("model_data", (dir, pre_data.model))
+            else:
+                mmass, mZ, mmodel = frame.get_state_data("model_data")
+                if (mmass != mass) or (mZ != Z) or (mmodel == None):
+                    clear_output()
+                    pre_data = ms.mesa_profile(mass=mass, Z=Z)
+                    frame.set_state_data("model_data", (mass, Z, pre_data.model))
 
     def address_bar_handler(widget):
         dir = frame.get_attribute("address_bar", "value")
@@ -233,7 +243,10 @@ def start_explorer(global_namespace, manual_data_select=False, dir="./"):
             frame.set_attributes("xaxis", options=sorted(data.cols.keys()))
             frame.set_attributes("yaxis", options=sorted(data.cols.keys()))
         elif module == "Profile":
-            data = ms.mesa_profile(mass=mass, Z=Z, num=model)
+            if manual_data_select:
+                data = ms.mesa_profile(dir, num=model)
+            else:
+                data = ms.mesa_profile(mass=mass, Z=Z, num=model)
             frame.set_state("mesa_w_data")
             frame.set_attributes("xaxis", options=sorted(data.cols.keys()))
             frame.set_attributes("yaxis", options=sorted(data.cols.keys()))
@@ -259,12 +272,21 @@ def start_explorer(global_namespace, manual_data_select=False, dir="./"):
 
             mass = float(frame.get_attribute("mass", "value"))
             Z = float(frame.get_attribute("Z", "value"))
-            mmass, mZ, mmodel = frame.get_state_data("model_data")
-            if (mmass != mass) or (mZ != Z) or (mmodel == None):
-                clear_output()
-                pre_data = ms.mesa_profile(mass=mass, Z=Z)
-                mmodel = pre_data.model
-                frame.set_state_data("model_data", (mass, Z, mmodel))
+            dir = frame.get_attribute("address_bar", "value")
+            if manual_data_select:
+                mdir, mmodel = frame.get_state_data("model_data")
+                if (mdir != dir) or (mmodel == None):
+                    clear_output()
+                    pre_data = ms.mesa_profile(dir)
+                    mmodel = pre_data.model
+                    frame.set_state_data("model_data", (dir, mmodel))
+            else:
+                mmass, mZ, mmodel = frame.get_state_data("model_data")
+                if (mmass != mass) or (mZ != Z) or (mmodel == None):
+                    clear_output()
+                    pre_data = ms.mesa_profile(mass=mass, Z=Z)
+                    mmodel = pre_data.model
+                    frame.set_state_data("model_data", (mass, Z, mmodel))
 
             frame.set_state_attribute("contain_model_select", states_mesa, visible=True)
             frame.set_attributes("contain_model_select", visible=True)
