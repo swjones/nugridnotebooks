@@ -6,6 +6,7 @@ if os.path.isdir("/home/nugrid/omega_sygma"):
     os.environ["SYGMADIR"] = "/home/nugrid/omega_sygma"
 
 import omega
+import stellab
 
 import widget_framework as framework
 from widget_utils import float_text, auto_styles
@@ -15,7 +16,7 @@ from matplotlib import pyplot, colors
 
 def start_OMEGA():
     tablist = ["sculptor", "carina", "fornax"]
-    yield_table = 'yield_tables/isotope_yield_table_N06_30Mo_full_IMF.txt'
+    yield_table = 'yield_tables/isotope_yield_table_MESA_only_ye.txt'
                     
     mgal_factor = {"sculptor":1.51e9, "carina":3.4e6, "fornax":7.08e8}
                     
@@ -139,18 +140,18 @@ def start_OMEGA():
     frame.set_state_attribute('fornax', visible=True)
     
     frame.set_state_attribute("baryon_name_group", visible=True, **group_style)
-    frame.set_state_attribute("f_baryon", visible=True, description="Baryon fraction: ", min=0.004, max=1.0, step=0.001)
-    frame.set_state_attribute("f_baryon", "sculptor", value=0.005)
-    frame.set_state_attribute("f_baryon", "carina", value=0.30)
-    frame.set_state_attribute("f_baryon", "fornax", value=0.16)
+    frame.set_state_attribute("f_baryon", visible=True, description="Baryon fraction: ", min=0.00005, max=0.20001, step=0.001)
+    frame.set_state_attribute("f_baryon", "sculptor", value=0.001)
+    frame.set_state_attribute("f_baryon", "carina", value=0.05)
+    frame.set_state_attribute("f_baryon", "fornax", value=0.001)
     frame.set_state_attribute("run_name", visible=True, description="Run name: ", placeholder="Enter name", **text_box_style)
     
     frame.set_state_attribute("loading_mass", visible=True, description="Mass loading factor: ", **text_box_style)
-    frame.set_state_attribute("loading_mass", ["sculptor", "carina"], value="40.0")
-    frame.set_state_attribute("loading_mass", "fornax", value="5.0")
+    frame.set_state_attribute("loading_mass", ["sculptor", "carina"], value="10.0")
+    frame.set_state_attribute("loading_mass", "fornax", value="4.0")
     frame.set_state_attribute("sn1a_pmil", visible=True, description="SNe Ia per stellar mass formed: ", **text_box_style)
-    frame.set_state_attribute("sn1a_pmil", "sculptor", value="2.0e-3")
-    frame.set_state_attribute("sn1a_pmil", ["carina", "fornax"], value="4.0e-3")
+    frame.set_state_attribute("sn1a_pmil", ["sculptor", "carina"], value="2.0e-3")
+    frame.set_state_attribute("sn1a_pmil", "fornax", value="4.0e-3")
     
     frame.set_state_attribute("run_add_rm_group", visible=True, **group_style)
     frame.set_state_attribute("run_sim", visible=True, description="Run simulation", **button_style)
@@ -190,8 +191,9 @@ def start_OMEGA():
         sn1a_pmil = float(frame.get_attribute("sn1a_pmil", "value"))
         
         mgal = f_baryon * mgal_factor[state]
+        st = stellab.stellab()
         data = omega.omega(galaxy=state, in_out_control=True, mgal=mgal, mass_loading=loading_mass, 
-                           nb_1a_per_m=sn1a_pmil, table=yield_table)
+                           nb_1a_per_m=sn1a_pmil, table=yield_table, Z_trans=-1, in_out_ratio=2.0)
         
         add_run(state, data, name)
         frame.update()
@@ -223,6 +225,7 @@ def start_OMEGA():
         
         if len(data) != 0:
             element = frame.get_attribute("select_elem", "value")
+            st.plot_spectro(xaxis='[Fe/H]', yaxis=yaxis,norm='Grevesse_Sauval_1998',galaxy=state,show_err=True)
             for i in xrange(len(data)):
                 instance, name, line_style, line_color, widget_name = data[i]
                 yaxis = '['+element+'/Fe]'
@@ -230,8 +233,8 @@ def start_OMEGA():
                 selected = frame.get_attribute(widget_name, "value")
                 if selected:
                     plotted_data=True
-                    instance.plot_spectro(xaxis="[Fe/H]", yaxis=yaxis, show_data=comp_data, color=color_convert.to_rgba("w", 0.8),
-                                          shape="-", marker=" ", linewidth=4, fsize=[10, 4.5], show_legend=False)
+                    xy = instance.plot_spectro(xaxis='[Fe/H]', yaxis=yaxis, return_x_y=True)
+                    pyplot.plot(xy[0], xy[1], color=color_convert.to_rgba("w", 0.8), linestyle="-", marker=" ", linewidth=4)
                     if comp_data:
                         comp_data=False
     
@@ -242,18 +245,19 @@ def start_OMEGA():
                 selected = frame.get_attribute(widget_name, "value")
                 if selected:
                     plotted_data=True
-                    instance.plot_spectro(xaxis="[Fe/H]", yaxis=yaxis, label=label, show_data=comp_data, color=line_color,
-                                          shape=line_style, marker=" ", linewidth=2, fsize=[10, 4.5])
+                    xy = instance.plot_spectro(xaxis='[Fe/H]', yaxis=yaxis, return_x_y=True)
+                    pyplot.plot(xy[0], xy[1], color=line_color, linestyle=line_style, marker=" ", linewidth=2, label=label)
                     if comp_data:
                         comp_data=False
+            #pyplot.legend(loc='center left', bbox_to_anchor=(1.01, 0.5), markerscale=0.8, fontsize=12)
             
             if plotted_data:
                 frame.set_attributes("warning_msg", visible=False)
                 if state=="sculptor":
-                    pyplot.ylim(-1.0,1.4)
+                    pyplot.ylim(-1.0,1.6)
                     pyplot.xlim(-4.0, -0.5)
                 elif state=="carina":
-                    pyplot.ylim(-1.0,1.4)
+                    pyplot.ylim(-1.0,1.6)
                     pyplot.xlim(-4.0, -0.5)
                 if state=="fornax":
                     pyplot.ylim(-1.0,1.4)
