@@ -140,7 +140,7 @@ def start_OMEGA():
     frame.set_state_attribute('fornax', visible=True)
     
     frame.set_state_attribute("baryon_name_group", visible=True, **group_style)
-    frame.set_state_attribute("f_baryon", visible=True, description="Baryon fraction: ", min=0.00005, max=0.20001, step=0.001)
+    frame.set_state_attribute("f_baryon", visible=True, description="Baryon fraction: ", min=0.00005, max=0.1, step=0.00005)
     frame.set_state_attribute("f_baryon", "sculptor", value=0.001)
     frame.set_state_attribute("f_baryon", "carina", value=0.05)
     frame.set_state_attribute("f_baryon", "fornax", value=0.001)
@@ -191,7 +191,6 @@ def start_OMEGA():
         sn1a_pmil = float(frame.get_attribute("sn1a_pmil", "value"))
         
         mgal = f_baryon * mgal_factor[state]
-        st = stellab.stellab()
         data = omega.omega(galaxy=state, in_out_control=True, mgal=mgal, mass_loading=loading_mass, 
                            nb_1a_per_m=sn1a_pmil, table=yield_table, Z_trans=-1, in_out_ratio=2.0)
         
@@ -224,6 +223,7 @@ def start_OMEGA():
         comp_data = True
         
         if len(data) != 0:
+            st = stellab.stellab()
             element = frame.get_attribute("select_elem", "value")
             st.plot_spectro(xaxis='[Fe/H]', yaxis=yaxis,norm='Grevesse_Sauval_1998',galaxy=state,show_err=True)
             for i in xrange(len(data)):
