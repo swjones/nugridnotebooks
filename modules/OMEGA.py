@@ -225,10 +225,10 @@ def start_OMEGA():
         if len(data) != 0:
             st = stellab.stellab()
             element = frame.get_attribute("select_elem", "value")
+            yaxis = '['+element+'/Fe]'
             st.plot_spectro(xaxis='[Fe/H]', yaxis=yaxis,norm='Grevesse_Sauval_1998',galaxy=state,show_err=True)
             for i in xrange(len(data)):
                 instance, name, line_style, line_color, widget_name = data[i]
-                yaxis = '['+element+'/Fe]'
                 label = name+", "+yaxis
                 selected = frame.get_attribute(widget_name, "value")
                 if selected:
@@ -240,7 +240,6 @@ def start_OMEGA():
     
             for i in xrange(len(data)):
                 instance, name, line_style, line_color, widget_name = data[i]
-                yaxis = '['+element+'/Fe]'
                 label = name+", "+yaxis
                 selected = frame.get_attribute(widget_name, "value")
                 if selected:
