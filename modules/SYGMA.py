@@ -259,7 +259,7 @@ def start_SYGMA():
     frame.set_state_attribute('yield_table_list', visible=True, options=yield_list["Ye=0.4982"], selected_label="Fallback at Ye")
     frame.set_state_links("sn1a_link", [("use_sn1a", "value"), ("sn1a_rates", "visible")], directional=True)
     
-    frame.set_state_attribute('sn1a_rates', description="SNe Ia rates: ", options=['Power law', 'Exponential', 'Gaussian'])
+    frame.set_state_attribute('sn1a_rates', description="SNe Ia rates: ", options=['Power law', 'Exponential', 'Gaussian','Maoz12'])
     
     frame.set_state_attribute("run_sim_remove_run_group", visible=True, **group_style)
     frame.set_state_attribute('run_sim', visible=True, description="Run simulation", **button_style)
