@@ -306,7 +306,7 @@ def start_SYGMA():
         clear_output()
         pyplot.close("all")
         
-        sn1a_map = {"Power law":"maoz", "Exponential":"wiersmaexp", "Gaussian":"wiersmagauss"}
+        sn1a_map = {"Power law":"power_law", "Gaussian":"gauss","Exponential":"exp","Maoz12":"maoz"}
         
         mgal = float(frame.get_attribute("mass_gas", "value"))
         iniZ = float(frame.get_attribute("init_Z", "value"))
