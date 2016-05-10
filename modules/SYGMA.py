@@ -784,7 +784,7 @@ def start_SYGMA():
         
         for data, name, Z, widget_name in runs:
             if frame.get_attribute(widget_name, "value"):
-                file = "evol_tables/" + widget_name.replace("#", "") + "file"
+                file = "evol_tables/" + widget_name.replace("#", "") + "file.txt"
                 if iso_or_elem == "Elements":
                     data.write_evol_table(species, [], file, "./")
                 elif iso_or_elem == "Isotopes":
